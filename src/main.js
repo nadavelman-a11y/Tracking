@@ -20,7 +20,7 @@ const paths = {
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 };
 const icon = (name, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
-const assetPath = name => `${import.meta.env.BASE_URL}${name}`;
+const assetPath = name => window.__NINA_INLINE_ASSETS__?.[name] || `${import.meta.env.BASE_URL}${name}`;
 const brand = `<img class="brand-logo" src="${assetPath('nina-elman-logo.png')}" alt="Nina Elman Interiors" width="630" height="454">`;
 
 document.querySelector('#app').innerHTML = `

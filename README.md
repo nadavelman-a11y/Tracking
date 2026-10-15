@@ -16,6 +16,12 @@ For a production build, run `npm run build`. The `dist/` directory can be hosted
 
 The GitHub Pages workflow in `.github/workflows/deploy.yml` builds and publishes pushes to `main` once Pages is enabled with GitHub Actions as its source. Deployment progress and errors appear in the repository’s Actions tab.
 
+GitHub refused automatic Pages enablement with `403 Resource not accessible by integration`. The repository owner must open `https://github.com/nadavelman-a11y/Tracking/settings/pages` and choose **GitHub Actions** as the source under **Build and deployment**. Then rerun the deployment workflow. The website is not publicly hosted until that deployment succeeds.
+
+## Open without hosting
+
+Download `downloads/nina-elman-tracking.html` and open it in a browser. All layout assets, fonts, photographs, and code are included in that single file. Internet access is still needed for live 17TRACK tracking. Rebuild this downloadable version with `npm run build:download` after changing the website.
+
 ## Tracking integration
 
 The form uses 17TRACK’s external-call widget at `https://www.17track.net/externalcall.js`, which creates a tracking iframe on `https://extcall.17track.net`. It does not scrape 17TRACK, bypass branding, or pretend to have a private API connection. No API credentials are required for this implementation. Carrier results remain styled and controlled by 17TRACK.
