@@ -16,7 +16,7 @@ For a production build, run `npm run build`. The `dist/` directory can be hosted
 
 The GitHub Pages workflow in `.github/workflows/deploy.yml` builds and publishes pushes to `main` once Pages is enabled with GitHub Actions as its source. Deployment progress and errors appear in the repository’s Actions tab.
 
-GitHub refused automatic Pages enablement with `403 Resource not accessible by integration`. The repository owner must open `https://github.com/nadavelman-a11y/Tracking/settings/pages` and choose **GitHub Actions** as the source under **Build and deployment**. Then rerun the deployment workflow. The website is not publicly hosted until that deployment succeeds.
+The public website is live at **https://nadavelman-a11y.github.io/Tracking/**. GitHub Pages is enabled with **GitHub Actions** as its source. Deployment run `38824784967` succeeded, and the public HTML, JavaScript, CSS, logo, photography, and font files were verified to return HTTP 200 over TLS. Future pushes to `main` publish automatically through the workflow; verify the latest run before claiming an update is live.
 
 ## Open without hosting
 
