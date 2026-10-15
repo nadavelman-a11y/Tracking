@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1100" viewBox="0 0 1000 1100">
+  <defs>
+    <linearGradient id="wall" x1="0" x2="1" y2=".7"><stop stop-color="#d7d1bf"/><stop offset=".6" stop-color="#e9e3d4"/><stop offset="1" stop-color="#c8bfaa"/></linearGradient>
+    <linearGradient id="arch" x1="0" x2="1"><stop stop-color="#b8ad95"/><stop offset=".4" stop-color="#d6cdb9"/><stop offset="1" stop-color="#c0b49c"/></linearGradient>
+    <linearGradient id="seat" x1="0" x2="1" y2="1"><stop stop-color="#c0a783"/><stop offset=".5" stop-color="#b39c78"/><stop offset="1" stop-color="#8b7659"/></linearGradient>
+    <linearGradient id="vase" x1="0" x2="1"><stop stop-color="#7f7054"/><stop offset=".45" stop-color="#afa183"/><stop offset="1" stop-color="#685b44"/></linearGradient>
+    <radialGradient id="light"><stop stop-color="#fff9e9" stop-opacity=".7"/><stop offset="1" stop-color="#fff9e9" stop-opacity="0"/></radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="13"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".07"/></feComponentTransfer><feBlend in="SourceGraphic" mode="multiply"/></filter>
+  </defs>
+  <g filter="url(#grain)">
+    <path fill="url(#wall)" d="M0 0h1000v1100H0z"/>
+    <path fill="url(#arch)" d="M530 900V292a193 193 0 0 1 386 0v608z"/>
+    <path fill="#a79d87" opacity=".25" d="M530 900V292a193 193 0 0 1 386 0v11a183 183 0 0 0-365 0v597z"/>
+    <ellipse cx="120" cy="450" rx="650" ry="700" fill="url(#light)"/>
+    <path d="M0 904h1000v196H0z" fill="#c5baa3"/>
+    <path d="m0 906 1000-6" stroke="#ae9f83" stroke-width="3"/>
+    <path d="m690 0-330 903H160L440 0z" fill="#fff9e7" opacity=".22"/>
+    <path d="m720 0-335 904" stroke="#fff8e6" stroke-width="3" opacity=".3"/>
+    <ellipse cx="570" cy="1010" rx="340" ry="37" fill="#7a6e55" opacity=".22" filter="url(#soft)"/>
+    <path d="M438 613q-75-2-109 65l-39 155q-10 69 68 78l226 10q71 0 89-74l15-108q0-102-92-115z" fill="url(#seat)"/>
+    <path d="M359 686q22-28 76-29l155 10q60 3 63 59l-12 88-294-14z" fill="#c9b18b"/>
+    <path d="m326 798 313 10q33 6 28 43t-58 47l-253-12q-65-8-30-88z" fill="#c6ae89"/>
+    <path d="m347 890-17 109h17l33-104M607 902l17 103h16l-5-120" fill="#61543f"/>
+    <path d="M337 786q-51-95-62-93-29 2-10 59l35 124q9 30 44 32" fill="none" stroke="#786445" stroke-width="15"/>
+    <path d="m657 797 34-103q12-33 31-22t6 45l-38 145q-10 40-50 44" fill="none" stroke="#786445" stroke-width="14"/>
+    <path d="M369 801q125-21 264 7" fill="none" stroke="#ad9570" stroke-width="2"/>
+    <path d="m487 651 97 15-31 142-101-8z" fill="#e2d8bd"/>
+    <path d="m485 662 88 14-27 117-83-3z" fill="#ddd0af"/>
+    <path d="M113 746h153v255H113z" fill="#a8977a"/>
+    <path d="m113 746 35-22h141l-23 22z" fill="#d7c8aa"/>
+    <path d="m266 746 23-22v250l-23 27z" fill="#8a7a60"/>
+    <ellipse cx="185" cy="729" rx="41" ry="9" fill="#76664b" opacity=".22"/>
+    <path d="M170 641q-4 25-20 47t1 37q27 14 61 0 15-11-2-40t-17-44z" fill="url(#vase)"/>
+    <ellipse cx="181" cy="641" rx="12" ry="4" fill="#65593f"/>
+    <g fill="none" stroke="#625e3f" stroke-width="2.5"><path d="M183 650q-28-103 13-208M179 609q-52-52-57-116M185 578q56-22 68-87"/></g>
+    <g fill="#727454"><ellipse cx="195" cy="461" rx="8" ry="25" transform="rotate(25 195 461)"/><ellipse cx="184" cy="498" rx="7" ry="22" transform="rotate(-30 184 498)"/><ellipse cx="200" cy="512" rx="7" ry="24" transform="rotate(40 200 512)"/><ellipse cx="180" cy="541" rx="7" ry="25" transform="rotate(-33 180 541)"/><ellipse cx="131" cy="520" rx="7" ry="23" transform="rotate(-35 131 520)"/><ellipse cx="144" cy="555" rx="7" ry="23" transform="rotate(-45 144 555)"/><ellipse cx="247" cy="517" rx="7" ry="23" transform="rotate(33 247 517)"/><ellipse cx="226" cy="548" rx="7" ry="23" transform="rotate(48 226 548)"/></g>
+    <path d="M830 659v348" stroke="#6d6046" stroke-width="7"/>
+    <ellipse cx="830" cy="1007" rx="57" ry="8" fill="#75654b"/>
+    <path d="m788 480-56 168q98 28 196 0l-56-168z" fill="#ede2c8"/>
+    <ellipse cx="830" cy="480" rx="42" ry="8" fill="#c6bba1"/>
+    <path d="m788 480-56 168q98 28 196 0" fill="none" stroke="#d1c3a5" stroke-width="2"/>
+  </g>
+</svg>
