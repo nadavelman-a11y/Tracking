@@ -1,6 +1,6 @@
-# Nina Elman Interiors · Delivery concierge
+# Nina Elman Interiors · Studio shipment desk
 
-A responsive shipment-tracking website with Nina Elman Interiors’ official logo, gold and charcoal accents, project photography, and locally hosted typography. Brand assets were sourced from the user-provided https://www.ninaelmaninteriors.com/ after network access was enabled.
+A responsive shipment workspace for Nina Elman Interiors employees, with the studio’s official logo, gold and charcoal accents, project photography, and locally hosted typography. Staff can attach project references, suppliers, items, purchase orders, and notes to each shipment. These records stay in browser storage; there is no employee login, shared database, or cross-device synchronization. The website itself remains public. Brand assets were sourced from the user-provided https://www.ninaelmaninteriors.com/.
 
 ## Run locally
 
@@ -24,9 +24,9 @@ Download `downloads/nina-elman-tracking.html` and open it in a browser. All layo
 
 ## Tracking integration
 
-The form uses 17TRACK’s external-call widget at `https://www.17track.net/externalcall.js`, which creates a tracking iframe on `https://extcall.17track.net`. It does not scrape 17TRACK, bypass branding, or pretend to have a private API connection. No API credentials are required for this implementation. Carrier results remain styled and controlled by 17TRACK.
+The form uses 17TRACK’s external-call widget at `https://www.17track.net/externalcall.js`, which creates a tracking iframe on `https://extcall.17track.net`. Its supported `YQ_RmHeader: true` and `YQ_RmAD: true` display options remove the provider’s banner and advertising. The official `api-track.min.js` and `yqad.min.js` scripts were inspected to verify these options. Attribution and an external tracking link remain visible. The iframe’s surrounding card is restyled, with a project-details sidebar. No API credentials are required; the user does not currently have confirmed API access. The underlying carrier timeline remains controlled by 17TRACK, so a fully custom live timeline would need a supported API and backend.
 
-The site validates and normalizes numbers, supports up to 10 shipments, remembers the four most recent numbers in local browser storage, and provides a direct `https://t.17track.net/en#nums=…` link. The widget is requested only after a tracking submission. If the script is unavailable, the external link and retry control remain available. Recent numbers can be cleared from the page.
+The site validates and normalizes numbers, supports up to 10 shipments, remembers the eight most recent numbers in local browser storage, and provides a direct `https://t.17track.net/en#nums=…` link. The widget is requested only after a tracking submission. If the script is unavailable, the external link and retry control remain available. Recent searches can be cleared without deleting saved project details. Unsaved project-detail drafts survive switching between shipments in the current page; “Save details” persists them in browser storage. Storage failures are reported rather than claiming a successful save.
 
 The sample delivery is explicitly fictional. Its styled timeline shows a potential design for a future custom integration; it is not a live shipment or an API-backed result. Showing live updates in that custom timeline would require a supported tracking API and a backend to protect its credentials.
 
@@ -40,7 +40,7 @@ The official widget script was downloaded over verified TLS, and executing that 
 npm test
 ```
 
-Browser tests cover invalid input, normalized submissions, widget failure/retry, multiple shipment selection, history persistence/clearing, the fictional sample, and narrow mobile layouts. Tests stub the remote widget for deterministic UI checks; they do not establish that a real shipment has carrier events. They use system Chromium where available, or `CHROMIUM_PATH` if specified. On other machines, install Playwright’s browser with `npx playwright install chromium`.
+The 12 browser tests cover invalid input, normalized submissions, the supported banner/advertising display flags, widget failure/retry, multiple shipment selection, history persistence/clearing, the fictional sample, mobile layouts, project-detail persistence, per-shipment drafts, text-safe rendering, and storage failures. Tests use synthetic numbers and stub the remote widget for deterministic UI checks; they do not establish that a real shipment has carrier events or visually validate the vendor’s live page. They use system Chromium where available, or `CHROMIUM_PATH` if specified. On other machines, install Playwright’s browser with `npx playwright install chromium`.
 
 ## Structure
 

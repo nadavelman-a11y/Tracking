@@ -28,8 +28,8 @@ document.querySelector('#app').innerHTML = `
   <header class="header shell">
     <a class="brand" href="#" aria-label="Nina Elman Interiors home">${brand}</a>
     <nav aria-label="Main navigation">
-      <a class="nav-active" href="#track">Track a delivery</a>
-      <a href="#how-it-works">How it works</a>
+      <a class="nav-active" href="#track">Shipment desk</a>
+      <a href="#how-it-works">Quick guide</a>
       <a class="nav-help" href="#questions">Need a hand? ${icon('arrow')}</a>
     </nav>
   </header>
@@ -37,64 +37,64 @@ document.querySelector('#app').innerHTML = `
   <main>
     <section class="hero shell" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="small-line"></span> THE DELIVERY CONCIERGE</div>
-        <h1 id="hero-title">A little closer<br>to <em>home.</em></h1>
-        <p class="hero-description">Beautiful spaces come together, piece by piece.<br class="desktop-break"> Follow the journey of your next finishing touch.</p>
+        <div class="eyebrow"><span class="small-line"></span> THE STUDIO DELIVERY DESK</div>
+        <h1 id="hero-title">Every piece.<br>Every <em>project.</em></h1>
+        <p class="hero-description">A working space for the Nina Elman Interiors team.<br class="desktop-break"> Follow supplier shipments and keep project details together.</p>
 
         <div class="tracking-card" id="track">
-          <div class="card-heading"><span class="box-mark">${icon('box')}</span><div><h2>Where is your delivery?</h2><p>Every detail, all the way to your door.</p></div></div>
+          <div class="card-heading"><span class="box-mark">${icon('box')}</span><div><h2>Find a shipment</h2><p>Supplier deliveries, all in one place.</p></div></div>
           <form id="tracking-form" novalidate>
             <div class="field-heading"><label for="tracking-number">TRACKING NUMBER</label><button class="text-button mode-button" id="toggle-multiple" type="button" aria-pressed="false">Track multiple</button></div>
             <div class="input-wrap">${icon('search')}<textarea id="tracking-number" rows="1" name="tracking-number" placeholder="Enter your tracking number" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="tracking-hint tracking-error" required maxlength="800"></textarea><button type="button" class="clear-input" id="clear-input" aria-label="Clear tracking number" hidden>${icon('close')}</button></div>
-            <p class="input-hint" id="tracking-hint">You’ll find this in your shipping confirmation email.</p>
+            <p class="input-hint" id="tracking-hint">Use the number from the supplier’s shipping confirmation.</p>
             <p class="form-error" id="tracking-error" role="alert" hidden></p>
-            <button class="primary-button" type="submit"><span>Track my delivery</span>${icon('arrow')}</button>
+            <button class="primary-button" type="submit"><span>Track shipment</span>${icon('arrow')}</button>
           </form>
-          <div class="tracking-provider"><span class="status-dot"></span> Worldwide tracking <span class="provider-divider">·</span> Powered by <a href="https://www.17track.net/en" target="_blank" rel="noopener noreferrer">17TRACK ${icon('external')}</a></div>
+          <div class="tracking-provider"><span class="status-dot"></span> Carrier tracking <span class="provider-divider">·</span> Powered by <a href="https://www.17track.net/en" target="_blank" rel="noopener noreferrer">17TRACK ${icon('external')}</a></div>
         </div>
-        <div class="demo-invite">Just taking a look? <button class="text-button" id="show-demo">Explore a sample delivery ${icon('arrow')}</button></div>
+        <div class="demo-invite">New to the workspace? <button class="text-button" id="show-demo">See an example shipment ${icon('arrow')}</button></div>
       </div>
       <div class="hero-art">
         <img src="${assetPath('nina-elman-interior.jpg')}" alt="A Nina Elman Interiors project featuring a sculptural chandelier and a sunlit bay window" width="859" height="1300" fetchpriority="high">
-        <div class="art-corner">CONSIDERED SPACES.<br>THOUGHTFUL DETAILS.</div>
-        <div class="art-note"><span class="note-icon">${icon('leaf')}</span><span>Worth the wait.<small>Made to feel like home.</small></span></div>
-        <span class="art-caption">THE ART OF ARRIVING WELL</span>
+        <div class="art-corner">NINA ELMAN INTERIORS<br>STUDIO OPERATIONS</div>
+        <div class="art-note"><span class="note-icon">${icon('leaf')}</span><span>Details, together.<small>From supplier to installation.</small></span></div>
+        <span class="art-caption">THE STUDIO WORKSPACE</span>
       </div>
     </section>
 
     <section class="recent-section shell" id="recent-section" aria-labelledby="recent-title" hidden>
-      <div class="section-line"><h2 id="recent-title">Recently tracked <span>On this device</span></h2><button class="text-button" id="clear-recent">Clear history</button></div>
-      <div id="recent-list" class="recent-list"></div>
+      <div class="section-line"><h2 id="recent-title">Recent shipments <span>Saved on this browser</span></h2><button class="text-button" id="clear-recent">Clear recent searches</button></div>
+      <p class="workspace-storage-note">Project details and notes stay on this browser. They are not synced between employees.</p><div id="recent-list" class="recent-list"></div>
     </section>
 
     <section class="results-section shell" id="results" aria-labelledby="results-title" hidden>
-      <div class="results-heading"><div><div class="eyebrow" id="result-eyebrow">YOUR DELIVERY</div><h2 id="results-title" tabindex="-1">The journey to your door.</h2></div><button class="text-button close-results" id="close-results">Close ${icon('close')}</button></div>
+      <div class="results-heading"><div><div class="eyebrow" id="result-eyebrow">SHIPMENT WORKSPACE</div><h2 id="results-title" tabindex="-1">Shipment overview.</h2></div><button class="text-button close-results" id="close-results">Close ${icon('close')}</button></div>
       <div id="results-content"></div>
     </section>
 
     <section class="benefits shell" id="how-it-works" aria-labelledby="benefits-title">
-      <div class="benefits-intro"><div class="eyebrow">FROM OUR STUDIO TO YOUR SPACE</div><h2 id="benefits-title">The journey, <em>simplified.</em></h2></div>
+      <div class="benefits-intro"><div class="eyebrow">BUILT FOR THE STUDIO TEAM</div><h2 id="benefits-title">A more organized <em>delivery day.</em></h2></div>
       <div class="benefit-grid">
-        <article><span class="benefit-number">01</span><div class="benefit-icon">${icon('search')}</div><h3>A number is all you need.</h3><p>Copy the tracking number from your shipping confirmation. We’ll take it from here.</p></article>
-        <article><span class="benefit-number">02</span><div class="benefit-icon">${icon('globe')}</div><h3>Across carriers. Across borders.</h3><p>Follow your delivery’s progress with carrier updates, brought together by 17TRACK.</p></article>
-        <article><span class="benefit-number">03</span><div class="benefit-icon">${icon('leaf')}</div><h3>A more considered arrival.</h3><p>See the latest available delivery details, so you can make room for what’s next.</p></article>
+        <article><span class="benefit-number">01</span><div class="benefit-icon">${icon('search')}</div><h3>Track the supplier’s shipment.</h3><p>Enter a tracking number from the supplier. Search up to 10 shipments at a time and switch between their updates.</p></article>
+        <article><span class="benefit-number">02</span><div class="benefit-icon">${icon('globe')}</div><h3>Keep the project attached.</h3><p>Add a project reference, supplier, item, order number, and notes to each shipment. Details are saved on this browser.</p></article>
+        <article><span class="benefit-number">03</span><div class="benefit-icon">${icon('leaf')}</div><h3>Plan the next handoff.</h3><p>Check carrier progress before coordinating receiving, delivery appointments, and installation with the team.</p></article>
       </div>
     </section>
 
     <section class="questions shell" id="questions" aria-labelledby="questions-title">
-      <div class="questions-intro"><div class="eyebrow">A LITTLE GUIDANCE</div><h2 id="questions-title">A few things<br>you might <em>wonder.</em></h2><p>Good things take care.<br>Here’s what to know along the way.</p></div>
+      <div class="questions-intro"><div class="eyebrow">WORKSPACE HELP</div><h2 id="questions-title">A few things<br>for the <em>team.</em></h2><p>A quick reference for tracking<br>supplier and project deliveries.</p></div>
       <div class="faq-list">
-        <details><summary>Where can I find my tracking number? ${icon('chevron')}</summary><p>Your tracking number is in the shipping confirmation sent by your retailer or delivery provider. It may arrive separately from your order confirmation. An order number is usually different from a tracking number.</p></details>
+        <details><summary>Where can I find my tracking number? ${icon('chevron')}</summary><p>Use the tracking number in the supplier’s dispatch email or shipping confirmation. Supplier order numbers and purchase order references are separate; you can save those in the shipment’s project details.</p></details>
         <details><summary>Why isn’t my tracking showing updates? ${icon('chevron')}</summary><p>A new number can take 24–48 hours to appear after a carrier receives your shipment. Updates may also pause between scans or during customs processing. If the expected delivery date has passed, contact the retailer or carrier with your tracking number.</p></details>
-        <details><summary>What if my order arrives in several deliveries? ${icon('chevron')}</summary><p>Furniture and finishing touches often travel separately. Each shipment has its own tracking number. Choose “Track multiple” to enter up to 10 numbers, one per line, and switch between their results.</p></details>
-        <details><summary>Can I arrange a delivery or change my address? ${icon('chevron')}</summary><p>This page helps you follow shipments; it doesn’t change delivery instructions. For address changes, appointments, white-glove delivery, or installation, contact your retailer or delivery provider directly.</p></details>
+        <details><summary>What if my order arrives in several deliveries? ${icon('chevron')}</summary><p>Furniture and accessories may ship in separate cartons or from different suppliers. Each shipment has its own tracking number. Choose “Track multiple” to enter up to 10 numbers, one per line, and switch between their results.</p></details>
+        <details><summary>Can the rest of the team see my notes? ${icon('chevron')}</summary><p>Project details and notes are saved only in the browser where you enter them. They are not shared between employees or devices. The website link is public; there is currently no employee sign-in or shared project database. For delivery changes and appointments, contact the supplier or carrier directly.</p></details>
         <details><summary>How is my tracking information used? ${icon('chevron')}</summary><p>Submitting a number sends it to 17TRACK to look up carrier information. Recent numbers stay in this browser only and can be cleared above. We don’t have an account system or store your tracking history on our own server. 17TRACK’s own privacy policy applies to its tracking service.</p></details>
       </div>
     </section>
 
-    <section class="closing-strip"><div class="shell"><span class="mini-flower" aria-hidden="true">✳</span><p>Every detail has a journey.<br class="mobile-break"> <em>Every journey leads home.</em></p><a href="#track" aria-label="Back to shipment tracking">${icon('arrow')}</a></div></section>
+    <section class="closing-strip"><div class="shell"><span class="mini-flower" aria-hidden="true">✳</span><p>Every shipment has a project.<br class="mobile-break"> <em>Keep the details together.</em></p><a href="#track" aria-label="Back to shipment tracking">${icon('arrow')}</a></div></section>
   </main>
-  <footer class="footer shell"><a class="brand" href="#" aria-label="Nina Elman Interiors home">${brand}</a><p>A thoughtful arrival, by Nina Elman Interiors.</p><span>© ${new Date().getFullYear()} NINA ELMAN INTERIORS</span></footer>
+  <footer class="footer shell"><a class="brand" href="#" aria-label="Nina Elman Interiors home">${brand}</a><p>Nina Elman Interiors · Studio operations.</p><span>© ${new Date().getFullYear()} NINA ELMAN INTERIORS</span></footer>
 `;
 
 const form = document.querySelector('#tracking-form');
@@ -103,14 +103,56 @@ const error = document.querySelector('#tracking-error');
 const results = document.querySelector('#results');
 const content = document.querySelector('#results-content');
 const storageKey = 'nina-elman-tracking-history';
+const detailStorageKey = 'nina-elman-shipment-details';
+const detailDrafts = new Map();
 let multiple = false;
 let requestId = 0;
 let widgetPromise;
 
+function shipmentDetails(number) {
+  try {
+    const entries = JSON.parse(localStorage.getItem(detailStorageKey) || '{}');
+    const data = entries && typeof entries === 'object' && Object.hasOwn(entries, number) ? entries[number] : {};
+    return Object.fromEntries(['project', 'supplier', 'item', 'order', 'notes'].map(key => [key, typeof data?.[key] === 'string' ? data[key].slice(0, key === 'notes' ? 2000 : 200) : '']));
+  } catch { return {}; }
+}
+
+function mountDetails(number, panel) {
+  const details = detailDrafts.get(number) || shipmentDetails(number);
+  const form = panel.querySelector('#shipment-details-form');
+  for (const [key, value] of Object.entries(details)) form.elements.namedItem(key).value = value;
+  if (detailDrafts.has(number)) {
+    panel.querySelector('#details-status').textContent = 'Unsaved changes. Select “Save details” to keep them.';
+    panel.querySelector('#details-status').dataset.state = 'unsaved';
+  }
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const status = panel.querySelector('#details-status');
+    try {
+      const stored = JSON.parse(localStorage.getItem(detailStorageKey) || '{}');
+      const entries = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+      entries[number] = Object.fromEntries(new FormData(form));
+      localStorage.setItem(detailStorageKey, JSON.stringify(entries));
+      detailDrafts.delete(number);
+      status.textContent = 'Details saved on this browser.';
+      status.dataset.state = 'saved';
+      renderHistory();
+    } catch {
+      status.textContent = 'Your browser could not save these details. Keep this page open and copy any notes you need.';
+      status.dataset.state = 'error';
+    }
+  });
+  form.addEventListener('input', () => {
+    detailDrafts.set(number, Object.fromEntries(new FormData(form)));
+    panel.querySelector('#details-status').textContent = 'Unsaved changes. Select “Save details” to keep them.';
+    panel.querySelector('#details-status').dataset.state = 'unsaved';
+  });
+}
+
 function getHistory() {
   try {
     const value = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    return Array.isArray(value) ? value.filter(n => typeof n === 'string' && /^[a-zA-Z0-9-]{5,50}$/.test(n)).slice(0, 4) : [];
+    return Array.isArray(value) ? value.filter(n => typeof n === 'string' && /^[a-zA-Z0-9-]{5,50}$/.test(n)).slice(0, 8) : [];
   } catch { return []; }
 }
 
@@ -124,13 +166,19 @@ function renderHistory() {
     button.className = 'recent-chip';
     button.innerHTML = `${icon('clock')}<span></span>${icon('arrow')}`;
     button.querySelector('span').textContent = number;
+    const details = shipmentDetails(number);
+    if (details.project || details.item) {
+      const label = document.createElement('small');
+      label.textContent = details.project || details.item;
+      button.querySelector('span').prepend(label);
+    }
     button.addEventListener('click', () => { input.value = number; updateInput(); track([number]); });
     list.append(button);
   }
 }
 
 function saveHistory(numbers) {
-  try { localStorage.setItem(storageKey, JSON.stringify([...new Set([...numbers, ...getHistory()])].slice(0, 4))); } catch { /* Tracking works when browser storage is unavailable. */ }
+  try { localStorage.setItem(storageKey, JSON.stringify([...new Set([...numbers, ...getHistory()])].slice(0, 8))); } catch { /* Tracking works when browser storage is unavailable. */ }
   renderHistory();
 }
 
@@ -149,8 +197,8 @@ function setError(message) {
 
 function revealResults(demo = false) {
   results.hidden = false;
-  document.querySelector('#result-eyebrow').textContent = demo ? 'SAMPLE DELIVERY · ILLUSTRATIVE PREVIEW' : 'YOUR DELIVERY';
-  document.querySelector('#results-title').textContent = demo ? 'A glimpse of the journey.' : 'The journey to your door.';
+  document.querySelector('#result-eyebrow').textContent = demo ? 'SAMPLE DELIVERY · ILLUSTRATIVE PREVIEW' : 'SHIPMENT WORKSPACE';
+  document.querySelector('#results-title').textContent = demo ? 'An example project shipment.' : 'Shipment overview.';
   results.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
   document.querySelector('#results-title').focus({ preventScroll: true });
 }
@@ -186,16 +234,35 @@ function trackingLink(number) { return `https://t.17track.net/en#nums=${encodeUR
 async function showLiveNumber(number) {
   const currentRequest = ++requestId;
   const panel = document.querySelector('#live-panel');
-  panel.innerHTML = `<div class="live-topline"><div><span class="eyebrow">TRACKING NUMBER</span><h3 id="active-number"></h3></div><a id="carrier-link" class="outline-button" target="_blank" rel="noopener noreferrer">Open in 17TRACK ${icon('external')}</a></div><div class="widget-notice" role="status"><span class="loading-spinner" aria-hidden="true"></span><div><strong>Finding the latest details.</strong><p>Connecting securely to 17TRACK…</p></div></div><div id="tracking-widget"></div><div class="provider-footnote">${icon('globe')} Carrier updates are provided by 17TRACK. Times and estimates may change.</div>`;
+  panel.innerHTML = `<div class="live-topline"><div><span class="eyebrow">SHIPMENT REFERENCE</span><h3 id="active-number"></h3></div><a id="carrier-link" class="outline-button" target="_blank" rel="noopener noreferrer">Open in 17TRACK ${icon('external')}</a></div>
+    <div class="shipment-workspace"><aside class="shipment-details" aria-labelledby="details-heading"><div class="details-title">${icon('box')}<h3 id="details-heading">Project details</h3></div><p class="details-intro">Keep the context with the shipment.</p>
+      <form id="shipment-details-form">
+        <label for="detail-project">Project / client reference</label><input id="detail-project" name="project" maxlength="120" placeholder="e.g. Oak House" autocomplete="off">
+        <label for="detail-supplier">Supplier</label><input id="detail-supplier" name="supplier" maxlength="120" placeholder="Supplier name" autocomplete="off">
+        <label for="detail-item">Item / room</label><input id="detail-item" name="item" maxlength="200" placeholder="e.g. Lounge chair · living room" autocomplete="off">
+        <label for="detail-order">PO / order number</label><input id="detail-order" name="order" maxlength="120" placeholder="Purchase order reference" autocomplete="off">
+        <label for="detail-notes">Team notes</label><textarea id="detail-notes" name="notes" rows="3" maxlength="2000" placeholder="Receiving instructions, installation notes…"></textarea>
+        <button class="save-details" type="submit">Save details ${icon('check')}</button>
+        <p id="details-status" class="details-status" role="status">Saved on this browser only. Not shared with other employees.</p>
+      </form></aside>
+      <div class="carrier-panel"><div class="widget-notice" role="status"><span class="loading-spinner" aria-hidden="true"></span><div><strong>Retrieving carrier updates</strong><p>Connecting to 17TRACK…</p></div></div><div id="tracking-widget"></div><div class="provider-footnote">${icon('globe')} Carrier data by 17TRACK. Delivery estimates may change.</div></div>
+    </div>`;
   document.querySelector('#active-number').textContent = number;
   document.querySelector('#carrier-link').href = trackingLink(number);
+  mountDetails(number, panel);
   try {
     const widget = await loadWidget();
     if (currentRequest !== requestId) return;
-    widget.trackSingle({ YQ_ContainerId: 'tracking-widget', YQ_Height: 560, YQ_Fc: '0', YQ_Lang: 'en', YQ_Num: number });
+    widget.trackSingle({ YQ_ContainerId: 'tracking-widget', YQ_Height: 700, YQ_Fc: '0', YQ_Lang: 'en', YQ_Num: number, YQ_RmHeader: true, YQ_RmAD: true });
     const frame = document.querySelector('#tracking-widget iframe');
-    if (frame) frame.title = `17TRACK shipment details for ${number}`;
-    panel.querySelector('.widget-notice').innerHTML = `<div>${icon('box')} <strong>Your tracking view</strong><p>17TRACK displays available carrier updates below. If it doesn’t load, use “Open in 17TRACK”.</p></div>`;
+    if (frame) {
+      frame.title = `17TRACK shipment details for ${number}`;
+      frame.style.border = '0';
+      frame.style.boxShadow = 'none';
+      frame.style.borderRadius = '4px';
+      frame.style.minWidth = '0';
+    }
+    panel.querySelector('.widget-notice').innerHTML = `<span>${icon('truck')} Carrier updates</span><span class="carrier-provider">Data by 17TRACK</span>`;
     panel.querySelector('.widget-notice').classList.add('widget-connected');
   } catch {
     if (currentRequest !== requestId) return;
@@ -230,7 +297,7 @@ function track(numbers) {
 form.addEventListener('submit', event => {
   event.preventDefault();
   const raw = input.value.trim();
-  if (!raw) { setError('Please enter the tracking number from your shipping email.'); return; }
+  if (!raw) { setError('Please enter the tracking number from the supplier’s shipping email.'); return; }
   if (!multiple && /[\r\n,;]/.test(raw)) { setError('For several tracking numbers, select “Track multiple” and put one on each line.'); return; }
   const entries = multiple ? raw.split(/[\n,;]+/).map(n => n.trim()).filter(Boolean) : [raw];
   const numbers = [...new Set(entries.map(n => n.replace(/\s+/g, '').toUpperCase()))];
@@ -255,7 +322,7 @@ document.querySelector('#toggle-multiple').addEventListener('click', event => {
   event.currentTarget.textContent = multiple ? 'Track one shipment' : 'Track multiple';
   input.rows = multiple ? 3 : 1;
   input.placeholder = multiple ? 'One tracking number per line' : 'Enter your tracking number';
-  document.querySelector('#tracking-hint').textContent = multiple ? 'Up to 10 tracking numbers, one per line.' : 'You’ll find this in your shipping confirmation email.';
+  document.querySelector('#tracking-hint').textContent = multiple ? 'Up to 10 tracking numbers, one per line.' : 'Use the number from the supplier’s shipping confirmation.';
   input.focus();
 });
 document.querySelector('#clear-recent').addEventListener('click', () => {
@@ -272,10 +339,10 @@ document.querySelector('#close-results').addEventListener('click', () => {
 document.querySelector('#show-demo').addEventListener('click', () => {
   ++requestId;
   content.innerHTML = `<div class="demo-banner">This is a design preview with example information, not a live shipment.</div>
-    <div class="demo-layout"><div class="demo-summary"><div class="demo-status">${icon('truck')} On its way home</div><h3>Your finishing touch<br>is getting closer.</h3><p>Example shipment · Lounge chair</p><div class="demo-estimate"><span class="eyebrow">EXAMPLE DELIVERY WINDOW</span><strong>Thursday, 12 June</strong><span>Delivery timing is illustrative.</span></div><div class="demo-meta"><span>Shipment reference</span><strong>NE–PREVIEW–001</strong><span>Delivery service</span><strong>Example carrier</strong></div></div>
+    <div class="demo-layout"><div class="demo-summary"><div class="demo-status">${icon('truck')} In transit</div><h3>Lounge chair<br>for the Oak House project.</h3><p>Example supplier · Example purchase order</p><div class="demo-estimate"><span class="eyebrow">EXAMPLE DELIVERY WINDOW</span><strong>Thursday, 12 June</strong><span>Delivery timing is illustrative.</span></div><div class="demo-meta"><span>Shipment reference</span><strong>NE–PREVIEW–001</strong><span>Delivery service</span><strong>Example carrier</strong></div></div>
     <div class="demo-timeline"><div class="timeline-heading"><h4>The journey so far</h4><span>EXAMPLE UPDATES</span></div>
       <ol><li class="current"><span class="timeline-marker">${icon('truck')}</span><div><span class="timeline-time">11 JUN · 09:42</span><h5>In transit to your local depot</h5><p>Your piece is on the next leg of its journey.</p></div></li><li><span class="timeline-marker">${icon('check')}</span><div><span class="timeline-time">10 JUN · 16:15</span><h5>Collected by the carrier</h5><p>Carefully packed and ready for the road.</p></div></li><li><span class="timeline-marker">${icon('check')}</span><div><span class="timeline-time">09 JUN · 11:30</span><h5>Delivery details received</h5><p>The first step toward your space.</p></div></li></ol>
-      <p class="demo-disclaimer">This styled timeline shows a possible future API integration. Actual tracking uses the 17TRACK view.</p></div></div>`;
+      <p class="demo-disclaimer">This timeline is an example design, not live data. Actual shipments use the carrier view, with the provider’s header and advertising turned off.</p></div></div>`;
   revealResults(true);
 });
 
