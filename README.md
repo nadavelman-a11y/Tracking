@@ -20,17 +20,35 @@ The public website is live at **https://nadavelman-a11y.github.io/Tracking/**. G
 
 ## Domain and shared notes
 
-The requested custom address is `tracking.ninaelmaninteriors.com`. Its Wix DNS record is still an external prerequisite. The Cloudflare account connection is working, and the shared service is deployed at `https://nina-elman-shipment-notes.nina-elman-studio-82bc2b.workers.dev`. An anonymous save and read from a separate client passed against that HTTPS endpoint, with synthetic test contents cleared afterward. See [the setup guide](docs/domain-and-shared-notes.md) for the exact CNAME record, deployment steps, and existing-note migration. Do not activate the custom domain until DNS and note migration are ready.
+The custom address is `https://tracking.ninaelmaninteriors.com/`, with a Wix CNAME pointing to GitHub Pages. The Cloudflare account connection is working, and the shared service is deployed at `https://nina-elman-shipment-notes.nina-elman-studio-82bc2b.workers.dev`. An anonymous save and read from a separate client passed against that HTTPS endpoint, with synthetic test contents cleared afterward. See [the setup guide](docs/domain-and-shared-notes.md) for the exact CNAME record, deployment steps, and existing-note migration. Do not activate the custom domain until DNS and note migration are ready.
 
 The Cloudflare Worker in `worker/` stores shared details under each tracking number with no sign-in. It supports automatic 10-second refresh, preserves editing drafts, and rejects conflicting saves instead of overwriting a newer version. The frontend uses the verified public endpoint in `src/site-config.js`, optionally overridden by `VITE_SHARED_NOTES_URL`. An explicitly empty override selects browser-only mode for tests; an unset override uses the checked-in service. GitHub Actions builds with that checked-in public URL. No Cloudflare deployment credential belongs in the frontend or repository.
 
 The verified online endpoint is configured in `src/site-config.js`. Once this frontend version is deployed, saving notes shares them by tracking number and other visible views refresh about every 10 seconds. Existing browser-only details are offered for sharing rather than silently discarded. No end-user sign-in is required: the user explicitly chose sharing by tracking number alone.
 
-## Saved client folders
+## Daily shipment workspace
 
-**Saved numbers** opens the shared client directory. Add a client folder, then save tracking numbers with item descriptions. Folders sort alphabetically; search can cover all folders or only the selected folder. All-folder results show each shipment’s client name. Select a shipment to track it, edit its description, or remove its listing without deleting shipment notes. The same number can be saved in multiple client folders. Saving it again within one folder updates the description. Empty folders are supported. Delete folder removes that folder and its saved-number listings for everyone after confirmation, while preserving shipment notes and other folders. The directory refreshes every 10 seconds while open, with no sign-in. Existing notes remain separate: add their numbers to a folder to include them in the directory.
+The shared **Saved numbers** workspace is the homepage. Results are paged in groups of 50 while search and filters cover every saved entry. The default all-client view shows saved numbers with item descriptions, client names, suppliers, manual team statuses, and expected dates. Select a client folder to work within it; search can cover all clients or the selected folder. Filters cover arrivals in the next seven days, past expected dates, delays, received shipments, and open shipments. These are **team-maintained estimates and statuses**, not automatic carrier scans. Live carrier information remains in 17TRACK when a number is opened.
 
-`src/saved-shipments.js` uses `/api/saved` on the existing Worker. Migration `v2` adds the `SavedShipments` Durable Object alongside the existing notes storage; preserve migration `v1` when deploying. Each entry has its own storage key so hundreds of numbers do not share a single limited-size value. Browser-only previews cannot synchronize folders.
+Client folders support rename and deletion. Individual numbers support edit, copy, move, and removal. Deletions move folders/numbers into **Recently deleted**, where staff can restore them without affecting shared shipment notes. Restores never overwrite an existing number or collide silently with a newly created client folder. Directory edits carry versions; a stale employee draft is kept and rejected rather than silently replacing newer details. Existing older directory records remain readable and editable without resetting storage.
+
+Opening a saved shipment carries its client, item, and supplier into the tracking workspace. These fields are read-only there and are edited through the saved entry, avoiding re-entering the same information. PO references and notes remain editable with the existing version protection. **Back to saved numbers** keeps the current client, search, filter, and scroll position.
+
+### Google Sheets, Excel, and CSV import
+
+Use **Import spreadsheet** to upload `.xlsx`, `.csv`, or `.tsv`, or copy headings and rows directly from Google Sheets/Excel into the paste field. No Google connection, public sharing, or sign-in is required. Excel uses its first worksheet. Files are parsed locally; no directory writes happen until the reviewed rows are explicitly imported.
+
+Map the client-name column (required), and optionally tracking number, item description, supplier, expected date, and team status. Client-only rows create folders. Missing descriptions become `Shipment`. Tracking columns should be stored as **text** in the original sheet to preserve leading zeros and long numbers. CSV/paste parsing supports quoted fields and embedded newlines. Dates use `YYYY-MM-DD`; supported statuses are Ordered, In transit, Arriving soon, Delayed, and Received. Invalid rows block confirmation with row-level errors. Imports accept up to 5,000 rows/100 columns and files under 5 MB. Empty/duplicate rows are ignored, and numbers already saved in the same client folder are skipped rather than overwritten.
+
+The service commits validated batches of 20 rows atomically. If a later batch fails, completed batches remain saved and retries safely skip existing records; the UI reports this explicitly. Individual saved numbers may appear in multiple client folders.
+
+### Shared backups
+
+**Download shared backup** exports active client folders, saved numbers/metadata, and shared detail/note records for those saved numbers. Recently deleted items stay online; restore them before export to include them. Unlisted note records (numbers never added to a folder) and local browser drafts are not included. The existing browser backup remains available for local notes/drafts migration.
+
+**Restore shared backup** validates the entire file, previews the folder/entry count, and requires confirmation. It adds missing folders/numbers and only restores notes where no shared record exists. Existing team records are preserved. Failures report partially completed work; retries are non-destructive. Backups are JSON to preserve identifiers and avoid spreadsheet formula execution.
+
+`src/saved-shipments.js` uses `/api/saved` on the existing Worker. Migration `v2` added `SavedShipments` alongside `ShipmentNotes`; preserve both migrations when deploying. Entries and recovery copies use individual storage keys. Updates do not recreate or clear production storage. Browser-only previews cannot synchronize folders.
 
 ## Open without hosting
 
@@ -54,12 +72,15 @@ The official widget script was downloaded over verified TLS, and executing that 
 npm test
 ```
 
-The 15 browser-only tests cover tracking interactions, supported banner/advertising display flags, mobile layouts, local project details, storage failures, backup export/restore, and backup validation. Thirteen additional integration checks run against the real local Cloudflare Workers storage runtime and cover separate browser sessions, automatic refresh, conflicting edits, retained drafts, record isolation, validation, storage transactions, and migrating existing local notes. Tests use synthetic numbers; the 17TRACK widget is stubbed so they do not query real shipments or establish live carrier behavior. System Chromium is used where available, or `CHROMIUM_PATH` if specified. On other machines, install Playwright’s browser with `npx playwright install chromium`.
+The 15 browser-only tests cover tracking interactions, supported banner/advertising display flags, mobile layouts, local project details, storage failures, backup export/restore, and backup validation. Twenty-three additional integration checks run against the real local Cloudflare Workers storage runtime and cover separate browser sessions, automatic refresh, conflicting edits, retained drafts, record isolation, validation, storage transactions, and migrating existing local notes. Tests use synthetic numbers; the 17TRACK widget is stubbed so they do not query real shipments or establish live carrier behavior. System Chromium is used where available, or `CHROMIUM_PATH` if specified. On other machines, install Playwright’s browser with `npx playwright install chromium`.
 
 ## Structure
 
 - `src/main.js`: page, tracking integration, history, and sample experience
 - `src/style.css`: responsive styles
+- `src/saved-shipments.js`: shared daily workspace, import preview, organization, recovery, and backups
+- `src/spreadsheet.js`: local Excel/CSV/Google Sheets paste parsing
+- `shared/directory-schema.js`: shared directory input validation
 - `src/shared-notes.js` and `src/detail-sync.js`: shared service connection and draft-aware refresh
 - `src/workspace-backup.js`: validated, non-destructive local note backups
 - `worker/`: deployable shared notes service and automatic storage migration

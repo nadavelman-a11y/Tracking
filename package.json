@@ -15,10 +15,12 @@
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.2.8",
-    "@fontsource/manrope": "^5.2.8"
+    "@fontsource/manrope": "^5.2.8",
+    "read-excel-file": "^9.3.12"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
+    "fflate": "^0.8.3",
     "vite": "^7.1.12",
     "wrangler": "4.151.0"
   }

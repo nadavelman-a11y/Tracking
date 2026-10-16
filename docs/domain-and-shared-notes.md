@@ -1,10 +1,10 @@
 # Domain and shared notes setup
 
-The requested address is **tracking.ninaelmaninteriors.com**. Shared shipment details use the tracking number as the lookup key, with no employee sign-in, as requested. Anyone with that number can view and edit its shared notes. Records cannot be listed through the notes API.
+The requested address is **tracking.ninaelmaninteriors.com**. Shared shipment details use the tracking number as the lookup key, with no employee sign-in, as requested. Anyone with that number can view and edit its shared notes. Notes are keyed by number; the separate saved directory lists the client folders and numbers intentionally saved by staff.
 
 ## Current status
 
-The GitHub Pages site is live at https://nadavelman-a11y.github.io/Tracking/. The shared storage service is now deployed at `https://nina-elman-shipment-notes.nina-elman-studio-82bc2b.workers.dev`, and `src/site-config.js` points to it. Anonymous synthetic save/read tests passed against the online HTTPS endpoint, including an independent second client and the expected CORS header. Separate browser sessions, automatic refresh, and conflicting edits also passed against the real local Cloudflare Workers runtime. The custom domain is still pending its Wix DNS record.
+The GitHub Pages site is live at https://nadavelman-a11y.github.io/Tracking/. The shared storage service is now deployed at `https://nina-elman-shipment-notes.nina-elman-studio-82bc2b.workers.dev`, and `src/site-config.js` points to it. Anonymous synthetic save/read tests passed against the online HTTPS endpoint, including an independent second client and the expected CORS header. Separate browser sessions, automatic refresh, and conflicting edits also passed against the real local Cloudflare Workers runtime. The custom domain is configured in GitHub Pages, and the Wix `tracking` CNAME points to `nadavelman-a11y.github.io`. HTTPS page requests have succeeded at https://tracking.ninaelmaninteriors.com/.
 
 DNS checks found Wix nameservers (`ns6.wixdns.net` and `ns7.wixdns.net`) for Nina’s existing domain, and no record for the requested `tracking` host. The domain owner or their Wix administrator must add that record; a separate domain purchase is not needed. Do not change the main website’s records or transfer its nameservers.
 
@@ -60,4 +60,4 @@ npm test
 
 Cloud environments can set `WRANGLER_SEND_METRICS=false`, `WRANGLER_LOG_PATH=/tmp/nina-wrangler.log`, and `XDG_CONFIG_HOME=/tmp/nina-wrangler-config` to keep local tool files in writable paths. Preserve HTTPS verification for external requests.
 
-The Worker exposes only `GET`/`PUT /api/shipments/:number`, an OPTIONS handler, and `/health`. There is no sign-in, public directory of shipments, or delete-all route. It validates the allowed text fields and their lengths, normalizes tracking numbers, and commits saves with a version comparison in a storage transaction. CORS is a browser-origin check, not staff authentication.
+The Worker exposes `GET`/`PUT /api/shipments/:number`, `GET`/`PUT /api/saved`, OPTIONS handlers, and `/health`. The user-requested public client directory supports imports, versioned edits, rename/move, recoverable deletion, and restore. There is no sign-in or delete-all route. It validates the allowed text fields and their lengths, normalizes tracking numbers, and commits saves with a version comparison in a storage transaction. CORS is a browser-origin check, not staff authentication.

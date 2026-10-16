@@ -158,10 +158,11 @@ test('saved directory validates input, deduplicates folders, and removes only th
   await request.put(api + tracking, { data: { details: { notes: 'Keep these notes' }, baseVersion: 0 } });
   expect((await request.put(endpoint, { data: { action: 'entry', folderId, number: tracking, description: '' } })).status()).toBe(400);
   expect((await request.put(endpoint, { data: { action: 'entry', folderId: 'missing', number: tracking, description: 'Chair' } })).status()).toBe(400);
-  for (const description of ['Chair', 'Dining chair']) expect((await request.put(endpoint, { data: { action: 'entry', folderId, number: tracking, description } })).ok()).toBeTruthy();
+  let saved;
+  for (const description of ['Chair', 'Dining chair']) { const response = await request.put(endpoint, { data: { action: 'entry', folderId, number: tracking, description, baseVersion: saved?.version || 0 } }); expect(response.ok()).toBeTruthy(); saved = await response.json(); }
   let result = await (await request.get(endpoint)).json();
-  expect(result.entries.filter(entry => entry.folderId === folderId)).toEqual([{ folderId, number: tracking, description: 'Dining chair' }]);
-  await request.put(endpoint, { data: { action: 'remove', folderId, number: tracking } });
+  expect(result.entries.filter(entry => entry.folderId === folderId)).toEqual([expect.objectContaining({ folderId, number: tracking, description: 'Dining chair' })]);
+  await request.put(endpoint, { data: { action: 'remove', folderId, number: tracking, baseVersion: saved.version } });
   result = await (await request.get(endpoint)).json();
   expect(result.entries.filter(entry => entry.folderId === folderId)).toEqual([]);
   expect((await (await request.get(api + tracking)).json()).details.notes).toBe('Keep these notes');
@@ -192,7 +193,10 @@ test('hundreds of saved shipments stay searchable on a narrow phone', async ({ p
   await expect(page.locator('#saved-status')).toContainText('Shared with everyone');
   await page.locator('#saved-search').fill(name);
   await page.locator('.folder-button').filter({ hasText: name }).click();
-  await expect(page.locator('.saved-entry')).toHaveCount(220);
+  await expect(page.locator('.saved-entry')).toHaveCount(50);
+  await expect(page.locator('#entry-count')).toHaveText('220 shipments');
+  await page.getByRole('button', { name: 'Next page', exact: true }).click();
+  await expect(page.locator('#saved-pagination')).toContainText('51–100 of 220');
   await page.locator('#saved-search').fill('Furniture piece 219');
   await expect(page.locator('.saved-entry')).toHaveCount(1);
   await expect(page.locator('.saved-entry-open')).toContainText('TESTBULK00219');
@@ -206,7 +210,7 @@ test('search switches between all folders and the selected folder', async ({ pag
   } }));
   await page.goto(url);
   await page.getByRole('button', { name: 'Saved numbers', exact: true }).click();
-  await expect(page.locator('#folder-title')).toHaveText('Alpha Client');
+  await expect(page.locator('#folder-title')).toHaveText('All saved shipments');
   await page.locator('#saved-search').fill('Dining');
   await expect(page.locator('.saved-entry')).toHaveCount(2);
   await expect(page.locator('.saved-entry-client')).toHaveText(['Alpha Client', 'Beta Client']);
@@ -244,7 +248,7 @@ test('deleting a folder confirms, removes only its listings, and keeps notes and
   await expect(page.locator('#folder-title')).toHaveText(name);
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Delete folder', exact: true }).click();
-  await expect(page.locator('#saved-status')).toHaveText('Folder and its saved numbers deleted. Shipment notes kept.');
+  await expect(page.locator('#saved-status')).toHaveText('Folder and its saved numbers moved to Recently deleted. Shipment notes kept.');
   let data = await (await request.get(endpoint)).json();
   expect(data.folders.some(item => item.id === folder.id)).toBeFalsy();
   expect(data.entries.some(item => item.folderId === folder.id)).toBeFalsy();

@@ -120,6 +120,8 @@ let stopDetailSync = () => {};
 let multiple = false;
 let requestId = 0;
 let widgetPromise;
+let directory;
+let savedContext = null;
 
 function shipmentDetails(number) {
   if (sharedNotesEnabled && sharedDetails.get(number)?.version > 0) return sharedDetails.get(number).details;
@@ -173,6 +175,10 @@ function mountDetails(number, panel) {
     drafts: detailDrafts,
     versions: draftVersions,
     cached: sharedDetails.get(number),
+    decorateDetails: details => {
+      const context = savedContext?.number === number ? directory?.getContext(savedContext.folderId, number) : null;
+      return context ? { ...details, project: context.client, item: context.description, supplier: context.supplier || '' } : details;
+    },
     onRecord: record => { sharedDetails.set(number, record); renderHistory(); },
     persist: details => {
       const stored = JSON.parse(localStorage.getItem(detailStorageKey) || '{}');
@@ -269,7 +275,7 @@ async function showLiveNumber(number) {
   stopDetailSync();
   const currentRequest = ++requestId;
   const panel = document.querySelector('#live-panel');
-  panel.innerHTML = `<div class="live-topline"><div><span class="eyebrow">SHIPMENT REFERENCE</span><h3 id="active-number"></h3></div><button type="button" class="outline-button" data-save-number="${number}">Save in client folder</button><a id="carrier-link" class="outline-button" target="_blank" rel="noopener noreferrer">Open in 17TRACK ${icon('external')}</a></div>
+  panel.innerHTML = `<button type="button" class="text-button back-client" data-back-client>← Back to saved numbers</button><p class="saved-shipment-context" id="saved-shipment-context" hidden></p><div class="live-topline"><div><span class="eyebrow">SHIPMENT REFERENCE</span><h3 id="active-number"></h3></div><button type="button" class="outline-button" data-save-number="${number}">Save in client folder</button><a id="carrier-link" class="outline-button" target="_blank" rel="noopener noreferrer">Open in 17TRACK ${icon('external')}</a></div>
     <div class="shipment-workspace"><aside class="shipment-details" aria-labelledby="details-heading"><div class="details-title">${icon('box')}<h3 id="details-heading">Project details</h3></div><p class="details-intro">Keep the context with the shipment.</p>
       <form id="shipment-details-form">
         <label for="detail-project">Project / client reference</label><input id="detail-project" name="project" maxlength="120" placeholder="e.g. Oak House" autocomplete="off">
@@ -285,6 +291,12 @@ async function showLiveNumber(number) {
     </div>`;
   document.querySelector('#active-number').textContent = number;
   document.querySelector('#carrier-link').href = trackingLink(number);
+  const context = savedContext?.number === number ? directory?.getContext(savedContext.folderId, number) : null;
+  if (context) {
+    const label = panel.querySelector('#saved-shipment-context'); label.hidden = false; label.textContent = `${context.client} · ${context.description}`;
+    for (const field of ['project', 'item', 'supplier']) panel.querySelector(`[name="${field}"]`).readOnly = true;
+    panel.querySelector('.details-intro').textContent = 'Client, item, and supplier come from the saved shipment. Use Back to saved numbers, then Edit to change them.';
+  }
   mountDetails(number, panel);
   try {
     const widget = await loadWidget();
@@ -309,7 +321,8 @@ async function showLiveNumber(number) {
   }
 }
 
-function track(numbers) {
+function track(numbers, context = null) {
+  savedContext = context || directory?.contextFor(numbers[0]) || null;
   saveHistory(numbers);
   content.innerHTML = '<div class="number-tabs" role="group" aria-label="Choose shipment" hidden></div><div class="live-panel" id="live-panel"></div>';
   const tabs = content.querySelector('.number-tabs');
@@ -429,4 +442,14 @@ document.querySelector('#backup-file').addEventListener('change', async event =>
 
 renderHistory();
 
-mountSavedShipments({ openShipment: number => { input.value = number; updateInput(); track([number]); } });
+directory = mountSavedShipments({ openShipment: (number, context) => { input.value = number; updateInput(); track([number], context); } });
+
+document.addEventListener('directory-updated', () => {
+  if (!savedContext) return;
+  const context = directory?.getContext(savedContext.folderId, savedContext.number);
+  if (!context || document.querySelector('#active-number')?.textContent !== context.number) return;
+  const label = document.querySelector('#saved-shipment-context');
+  if (label) label.textContent = `${context.client} · ${context.description}`;
+  const form = document.querySelector('#shipment-details-form');
+  if (form) for (const [key,value] of Object.entries({project:context.client,item:context.description,supplier:context.supplier||''})) form.elements.namedItem(key).value=value;
+});

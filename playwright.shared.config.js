@@ -3,7 +3,7 @@ import config from './playwright.config.js';
 
 export default defineConfig({
   ...config,
-  testMatch: 'shared.spec.js',
+  testMatch: ['shared.spec.js', 'workspace.spec.js'],
   use: { ...config.use, baseURL: 'http://127.0.0.1:5174' },
   webServer: [
     {
