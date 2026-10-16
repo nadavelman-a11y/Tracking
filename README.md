@@ -1,6 +1,6 @@
 # Nina Elman Interiors · Studio shipment desk
 
-A responsive shipment workspace for Nina Elman Interiors employees, with the studio’s official logo, gold and charcoal accents, project photography, and locally hosted typography. Staff can attach project references, suppliers, items, purchase orders, and notes to each shipment. The default mode stores these records in browser storage. An optional shared storage service synchronizes details by tracking number without employee sign-in; anyone with that number can view and edit shared notes. Shared mode is enabled only after deploying the service and setting its URL. The website itself remains public. Brand assets were sourced from the user-provided https://www.ninaelmaninteriors.com/.
+A responsive shipment workspace for Nina Elman Interiors employees, with the studio’s official logo, gold and charcoal accents, project photography, and locally hosted typography. Staff can attach project references, suppliers, items, purchase orders, and notes to each shipment. The configured online service synchronizes details by tracking number without employee sign-in; anyone with that number can view and edit shared notes. Browser-only mode is also available for isolated development and backups. The website itself remains public. Brand assets were sourced from the user-provided https://www.ninaelmaninteriors.com/.
 
 ## Run locally
 
@@ -20,11 +20,11 @@ The public website is live at **https://nadavelman-a11y.github.io/Tracking/**. G
 
 ## Domain and shared notes
 
-The requested custom address is `tracking.ninaelmaninteriors.com`. Its Wix DNS record and the Cloudflare account connection are still external prerequisites. See [the setup guide](docs/domain-and-shared-notes.md) for the exact CNAME record, secure credential setup, deployment steps, and existing-note migration. Do not activate the custom domain until DNS and note migration are ready.
+The requested custom address is `tracking.ninaelmaninteriors.com`. Its Wix DNS record is still an external prerequisite. The Cloudflare account connection is working, and the shared service is deployed at `https://nina-elman-shipment-notes.nina-elman-studio-82bc2b.workers.dev`. An anonymous save and read from a separate client passed against that HTTPS endpoint, with synthetic test contents cleared afterward. See [the setup guide](docs/domain-and-shared-notes.md) for the exact CNAME record, deployment steps, and existing-note migration. Do not activate the custom domain until DNS and note migration are ready.
 
-The Cloudflare Worker in `worker/` stores shared details under each tracking number with no sign-in. It supports automatic 10-second refresh, preserves editing drafts, and rejects conflicting saves instead of overwriting a newer version. The frontend uses the public endpoint in `src/site-config.js`, optionally overridden by `VITE_SHARED_NOTES_URL`; leave both empty while the account is not connected. After verifying the service, commit its public URL in that file. GitHub Actions can alternatively use repository variable `SHARED_NOTES_URL`. No Cloudflare deployment credential belongs in the frontend or repository.
+The Cloudflare Worker in `worker/` stores shared details under each tracking number with no sign-in. It supports automatic 10-second refresh, preserves editing drafts, and rejects conflicting saves instead of overwriting a newer version. The frontend uses the verified public endpoint in `src/site-config.js`, optionally overridden by `VITE_SHARED_NOTES_URL`. An explicitly empty override selects browser-only mode for tests; an unset override uses the checked-in service. GitHub Actions builds with that checked-in public URL. No Cloudflare deployment credential belongs in the frontend or repository.
 
-**Online sharing is not active just because the code is installed.** The existing site continues to save notes in browser storage until the service is deployed and the frontend variable is configured. No end-user sign-in will be added: the user explicitly chose sharing by tracking number alone.
+The verified online endpoint is configured in `src/site-config.js`. Once this frontend version is deployed, saving notes shares them by tracking number and other visible views refresh about every 10 seconds. Existing browser-only details are offered for sharing rather than silently discarded. No end-user sign-in is required: the user explicitly chose sharing by tracking number alone.
 
 ## Open without hosting
 

@@ -9,14 +9,15 @@ export default defineConfig({
   fullyParallel: true,
   workers: 2,
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: 'http://127.0.0.1:5175',
     browserName: 'chromium',
     launchOptions: { executablePath, args: ['--no-sandbox'] },
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'npm run dev -- --port 5173 --strictPort',
-    url: 'http://127.0.0.1:5173',
+    command: 'npm run dev -- --port 5175 --strictPort',
+    url: 'http://127.0.0.1:5175',
     reuseExistingServer: !process.env.CI,
+    env: { VITE_SHARED_NOTES_URL: '' },
   },
 });

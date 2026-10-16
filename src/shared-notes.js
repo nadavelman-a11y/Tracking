@@ -1,7 +1,7 @@
 import { validateDetails } from '../shared/shipment-schema.js';
 import { sharedNotesEndpoint } from './site-config.js';
 
-export const sharedNotesURL = (import.meta.env.VITE_SHARED_NOTES_URL || sharedNotesEndpoint).trim().replace(/\/$/, '');
+export const sharedNotesURL = (import.meta.env.VITE_SHARED_NOTES_URL ?? sharedNotesEndpoint).trim().replace(/\/$/, '');
 if (sharedNotesURL) {
   const url = new URL(sharedNotesURL);
   if (url.username || url.password || url.search || url.hash || !['https:', ...(url.hostname === 'localhost' || url.hostname === '127.0.0.1' ? ['http:'] : [])].includes(url.protocol)) {

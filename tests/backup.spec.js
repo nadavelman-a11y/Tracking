@@ -18,7 +18,7 @@ test('a workspace backup can be downloaded and restored on a separate browser co
   try {
     const other = await context.newPage();
     await other.route('https://www.17track.net/externalcall.js', route => route.abort());
-    await other.goto('http://127.0.0.1:5173');
+    await other.goto(new URL('/', page.url()).href);
     await other.locator('#backup-file').setInputFiles(await download.path());
     await expect(other.locator('#backup-status')).toContainText('Backup restored');
     await other.locator('.recent-chip').click();

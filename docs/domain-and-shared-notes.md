@@ -4,7 +4,7 @@ The requested address is **tracking.ninaelmaninteriors.com**. Shared shipment de
 
 ## Current status
 
-The GitHub Pages site is already live at https://nadavelman-a11y.github.io/Tracking/. The shared storage service and frontend connection are implemented and tested against a real local Cloudflare Workers runtime, including separate browsers, automatic refresh, and conflicting edits. Online shared storage is **not connected** until the Cloudflare deployment and frontend repository variable below are completed. Browser-only notes continue working in the meantime.
+The GitHub Pages site is live at https://nadavelman-a11y.github.io/Tracking/. The shared storage service is now deployed at `https://nina-elman-shipment-notes.nina-elman-studio-82bc2b.workers.dev`, and `src/site-config.js` points to it. Anonymous synthetic save/read tests passed against the online HTTPS endpoint, including an independent second client and the expected CORS header. Separate browser sessions, automatic refresh, and conflicting edits also passed against the real local Cloudflare Workers runtime. The custom domain is still pending its Wix DNS record.
 
 DNS checks found Wix nameservers (`ns6.wixdns.net` and `ns7.wixdns.net`) for Nina’s existing domain, and no record for the requested `tracking` host. The domain owner or their Wix administrator must add that record; a separate domain purchase is not needed. Do not change the main website’s records or transfer its nameservers.
 
@@ -26,7 +26,7 @@ On the current site, expand **Keep your saved notes** and select **Download back
 
    This deploys `worker/wrangler.jsonc`; its migration creates the storage namespace automatically, so no separate database ID is needed. Keep the default free account plan. The token is for deployment, not a browser credential.
 5. Verify the returned HTTPS endpoint’s `/health` and an unused synthetic tracking number at `/api/shipments/<number>`. Test a save and read it from another browser before enabling the frontend. Do not query or populate real shipment records merely to test deployment.
-6. Set `sharedNotesEndpoint` in `src/site-config.js` to the exact verified Worker URL, without a trailing slash, then commit and push. This URL is public configuration, not a secret. Alternatively, a repository administrator can set the GitHub Actions variable `SHARED_NOTES_URL`; the workflow injects it as `VITE_SHARED_NOTES_URL` during the build, overriding the file. The current GitHub integration returned 403 for the Actions variables API, so using the public configuration file avoids a separate admin-console step.
+6. Set `sharedNotesEndpoint` in `src/site-config.js` to the exact verified Worker URL, without a trailing slash, then commit and push. This URL is public configuration, not a secret. An explicitly provided `VITE_SHARED_NOTES_URL` overrides that file for local development or tests; an empty override selects browser-only mode. The publishing workflow uses the checked-in endpoint and requires no repository-variable admin step.
 7. Dispatch **Publish tracking website**, wait for its success, and verify that separate browser sessions see the same saved notes for a synthetic number. The app refreshes active, visible records every 10 seconds and on return to the page. Version checks preserve drafts when two people edit the same shipment.
 
 No Cloudflare deployment has been verified until these steps are executed with a usable account binding. A locally passing test does not establish online syncing.

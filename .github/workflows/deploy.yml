@@ -28,8 +28,6 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run build
-        env:
-          VITE_SHARED_NOTES_URL: ${{ vars.SHARED_NOTES_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
