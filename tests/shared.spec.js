@@ -105,3 +105,95 @@ test('an automatic refresh preserves an active draft when another browser change
   await expect(page.locator('#details-status')).toContainText('Someone updated this shipment');
   await expect(page.getByLabel('Team notes', { exact: true })).toHaveValue('Keep my active draft');
 });
+
+test('client folders sort alphabetically, share across browsers, and open saved numbers', async ({ browser, request }) => {
+  const unique = randomUUID().slice(0, 8);
+  const first = await browser.newContext(), second = await browser.newContext();
+  const tracking = number();
+  try {
+    const a = await first.newPage(), b = await second.newPage();
+    await a.goto(url);
+    await a.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+    await expect(a.locator('#saved-status')).toContainText('Shared with everyone');
+    for (const name of [`Zelda ${unique}`, `Alice ${unique}`]) {
+      await a.getByLabel('New client folder', { exact: true }).fill(name);
+      await a.getByRole('button', { name: 'Add folder', exact: true }).click();
+      await expect(a.locator('#folder-title')).toHaveText(name);
+    }
+    await a.locator('#saved-number').fill(tracking.toLowerCase());
+    await a.getByLabel('Item description', { exact: true }).fill('Chair for dining room');
+    await a.getByRole('button', { name: 'Save number', exact: true }).click();
+    await expect(a.locator('.saved-entry-open')).toContainText(`${tracking} — Chair for dining room`);
+    await b.route('https://www.17track.net/externalcall.js', route => route.abort());
+    await b.goto(url);
+    await b.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+    await expect(b.locator('#saved-status')).toContainText('Shared with everyone');
+    await b.locator('#saved-search').fill(unique);
+    const names = await b.locator('.folder-button span:first-child').allTextContents();
+    expect(names).toEqual([`Alice ${unique}`, `Zelda ${unique}`]);
+    await b.locator('.folder-button').filter({ hasText: `Alice ${unique}` }).click();
+    await expect(b.locator('.saved-entry-open')).toContainText('Chair for dining room');
+    await b.getByRole('button', { name: `Edit ${tracking}`, exact: true }).click();
+    await b.getByLabel('Item description', { exact: true }).fill('Dining chair — updated');
+    await b.getByRole('button', { name: 'Save number', exact: true }).click();
+    await expect(b.locator('.saved-entry-open')).toContainText('Dining chair — updated');
+    await expect(b.locator('.saved-entry')).toHaveCount(1);
+    await b.locator('#saved-search').fill(tracking);
+    await expect(b.locator('.folder-button')).toHaveCount(1);
+    await b.locator('.saved-entry-open').click();
+    await expect(b.locator('.saved-dialog')).not.toBeVisible();
+    await expect(b.locator('#active-number')).toHaveText(tracking);
+    // Directory changes must not overwrite the independent shipment notes record.
+    expect((await (await request.get(api + tracking)).json()).version).toBe(0);
+  } finally { await first.close(); await second.close(); }
+});
+
+test('saved directory validates input, deduplicates folders, and removes only the listing', async ({ request }) => {
+  const endpoint = 'http://127.0.0.1:8787/api/saved';
+  const name = `Directory ${randomUUID()}`;
+  const folders = await Promise.all([name, name.toUpperCase()].map(name => request.put(endpoint, { data: { action: 'folder', name } }).then(r => r.json())));
+  expect(folders[0].id).toBe(folders[1].id);
+  const folderId = folders[0].id, tracking = number();
+  await request.put(api + tracking, { data: { details: { notes: 'Keep these notes' }, baseVersion: 0 } });
+  expect((await request.put(endpoint, { data: { action: 'entry', folderId, number: tracking, description: '' } })).status()).toBe(400);
+  expect((await request.put(endpoint, { data: { action: 'entry', folderId: 'missing', number: tracking, description: 'Chair' } })).status()).toBe(400);
+  for (const description of ['Chair', 'Dining chair']) expect((await request.put(endpoint, { data: { action: 'entry', folderId, number: tracking, description } })).ok()).toBeTruthy();
+  let result = await (await request.get(endpoint)).json();
+  expect(result.entries.filter(entry => entry.folderId === folderId)).toEqual([{ folderId, number: tracking, description: 'Dining chair' }]);
+  await request.put(endpoint, { data: { action: 'remove', folderId, number: tracking } });
+  result = await (await request.get(endpoint)).json();
+  expect(result.entries.filter(entry => entry.folderId === folderId)).toEqual([]);
+  expect((await (await request.get(api + tracking)).json()).details.notes).toBe('Keep these notes');
+});
+
+test('saved forms retain drafts when the directory cannot save', async ({ page }) => {
+  await page.goto(url);
+  await page.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+  await expect(page.locator('#saved-status')).toContainText('Shared with everyone');
+  await page.route('**/api/saved', route => route.request().method() === 'PUT' ? route.abort() : route.continue());
+  await page.getByLabel('New client folder', { exact: true }).fill('Keep this client draft');
+  await page.getByRole('button', { name: 'Add folder', exact: true }).click();
+  await expect(page.locator('#saved-status')).toContainText('Your form is kept');
+  await expect(page.getByLabel('New client folder', { exact: true })).toHaveValue('Keep this client draft');
+});
+
+test('hundreds of saved shipments stay searchable on a narrow phone', async ({ page, request }) => {
+  const endpoint = 'http://127.0.0.1:8787/api/saved';
+  const name = `Hundreds ${randomUUID().slice(0,8)}`;
+  const folder = await (await request.put(endpoint, { data: { action: 'folder', name } })).json();
+  for (let start = 0; start < 220; start += 20) {
+    const results = await Promise.all(Array.from({ length: 20 }, (_, offset) => request.put(endpoint, { data: { action: 'entry', folderId: folder.id, number: `TESTBULK${String(start+offset).padStart(5,'0')}`, description: `Furniture piece ${start+offset}` } })));
+    expect(results.every(response => response.ok())).toBeTruthy();
+  }
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(url);
+  await page.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+  await expect(page.locator('#saved-status')).toContainText('Shared with everyone');
+  await page.locator('#saved-search').fill(name);
+  await page.locator('.folder-button').filter({ hasText: name }).click();
+  await expect(page.locator('.saved-entry')).toHaveCount(220);
+  await page.locator('#saved-search').fill('Furniture piece 219');
+  await expect(page.locator('.saved-entry')).toHaveCount(1);
+  await expect(page.locator('.saved-entry-open')).toContainText('TESTBULK00219');
+  expect(await page.locator('.saved-dialog').evaluate(element => element.scrollWidth <= element.clientWidth)).toBeTruthy();
+});

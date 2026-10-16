@@ -7,6 +7,7 @@ import '@fontsource/manrope/latin-600.css';
 import './style.css';
 import { createBackup, readBackup, mergeBackup } from './workspace-backup.js';
 import { sharedNotesEnabled } from './shared-notes.js';
+import { mountSavedShipments } from './saved-shipments.js';
 import { connectSharedDetails } from './detail-sync.js';
 
 const paths = {
@@ -32,6 +33,7 @@ document.querySelector('#app').innerHTML = `
     <a class="brand" href="#" aria-label="Nina Elman Interiors home">${brand}</a>
     <nav aria-label="Main navigation">
       <a class="nav-active" href="#track">Shipment desk</a>
+      <button class="text-button" id="open-saved" type="button">Saved no.s</button>
       <a href="#how-it-works">Quick guide</a>
       <a class="nav-help" href="#questions">Need a hand? ${icon('arrow')}</a>
     </nav>
@@ -95,7 +97,7 @@ document.querySelector('#app').innerHTML = `
         <details><summary>Why isn’t my tracking showing updates? ${icon('chevron')}</summary><p>A new number can take 24–48 hours to appear after a carrier receives your shipment. Updates may also pause between scans or during customs processing. If the expected delivery date has passed, contact the retailer or carrier with your tracking number.</p></details>
         <details><summary>What if my order arrives in several deliveries? ${icon('chevron')}</summary><p>Furniture and accessories may ship in separate cartons or from different suppliers. Each shipment has its own tracking number. Choose “Track multiple” to enter up to 10 numbers, one per line, and switch between their results.</p></details>
         <details><summary>Can the rest of the team see my notes? ${icon('chevron')}</summary><p>${sharedNotesEnabled ? 'Yes. Saved details are shared with anyone who enters the same tracking number, with no sign-in. Other open views refresh automatically about every 10 seconds. If someone changes a shipment while you are editing, your draft is kept and you can load the latest shared version before saving.' : 'Shared storage is not connected yet. Your saved details stay on this browser. Once connected, anyone entering the same tracking number will be able to view and edit shared notes without signing in.'} For delivery changes and appointments, contact the supplier or carrier directly.</p></details>
-        <details><summary>How is my tracking information used? ${icon('chevron')}</summary><p>Submitting a number sends it to 17TRACK to look up carrier information. Recent numbers stay in this browser only and can be cleared above. We don’t have an account system or store your tracking history on our own server. 17TRACK’s own privacy policy applies to its tracking service.</p></details>
+        <details><summary>How is my tracking information used? ${icon('chevron')}</summary><p>Submitting a number sends it to 17TRACK to look up carrier information. Recent numbers stay in this browser only and can be cleared above. Saved client folders, tracking numbers, descriptions, and notes are shared with everyone using this workspace, without sign-in. 17TRACK’s own privacy policy applies to its tracking service.</p></details>
       </div>
     </section>
 
@@ -267,7 +269,7 @@ async function showLiveNumber(number) {
   stopDetailSync();
   const currentRequest = ++requestId;
   const panel = document.querySelector('#live-panel');
-  panel.innerHTML = `<div class="live-topline"><div><span class="eyebrow">SHIPMENT REFERENCE</span><h3 id="active-number"></h3></div><a id="carrier-link" class="outline-button" target="_blank" rel="noopener noreferrer">Open in 17TRACK ${icon('external')}</a></div>
+  panel.innerHTML = `<div class="live-topline"><div><span class="eyebrow">SHIPMENT REFERENCE</span><h3 id="active-number"></h3></div><button type="button" class="outline-button" data-save-number="${number}">Save in client folder</button><a id="carrier-link" class="outline-button" target="_blank" rel="noopener noreferrer">Open in 17TRACK ${icon('external')}</a></div>
     <div class="shipment-workspace"><aside class="shipment-details" aria-labelledby="details-heading"><div class="details-title">${icon('box')}<h3 id="details-heading">Project details</h3></div><p class="details-intro">Keep the context with the shipment.</p>
       <form id="shipment-details-form">
         <label for="detail-project">Project / client reference</label><input id="detail-project" name="project" maxlength="120" placeholder="e.g. Oak House" autocomplete="off">
@@ -426,3 +428,5 @@ document.querySelector('#backup-file').addEventListener('change', async event =>
 });
 
 renderHistory();
+
+mountSavedShipments({ openShipment: number => { input.value = number; updateInput(); track([number]); } });

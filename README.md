@@ -26,6 +26,12 @@ The Cloudflare Worker in `worker/` stores shared details under each tracking num
 
 The verified online endpoint is configured in `src/site-config.js`. Once this frontend version is deployed, saving notes shares them by tracking number and other visible views refresh about every 10 seconds. Existing browser-only details are offered for sharing rather than silently discarded. No end-user sign-in is required: the user explicitly chose sharing by tracking number alone.
 
+## Saved client folders
+
+**Saved no.s** opens the shared client directory. Add a client folder, then save tracking numbers with item descriptions. Folders sort alphabetically; search finds client names, numbers, and descriptions. Select a shipment to track it, edit its description, or remove its listing without deleting shipment notes. The same number can be saved in multiple client folders. Saving it again within one folder updates the description. Empty folders are supported. The directory refreshes every 10 seconds while open, with no sign-in. Existing notes remain separate: add their numbers to a folder to include them in the directory.
+
+`src/saved-shipments.js` uses `/api/saved` on the existing Worker. Migration `v2` adds the `SavedShipments` Durable Object alongside the existing notes storage; preserve migration `v1` when deploying. Each entry has its own storage key so hundreds of numbers do not share a single limited-size value. Browser-only previews cannot synchronize folders.
+
 ## Open without hosting
 
 Download `downloads/nina-elman-tracking.html` and open it in a browser. All layout assets, fonts, photographs, and code are included in that single file. Internet access is still needed for live 17TRACK tracking. Rebuild this downloadable version with `npm run build:download` after changing the website.
@@ -48,7 +54,7 @@ The official widget script was downloaded over verified TLS, and executing that 
 npm test
 ```
 
-The 15 browser-only tests cover tracking interactions, supported banner/advertising display flags, mobile layouts, local project details, storage failures, backup export/restore, and backup validation. Seven additional integration checks run against the real local Cloudflare Workers storage runtime and cover separate browser sessions, automatic refresh, conflicting edits, retained drafts, record isolation, validation, storage transactions, and migrating existing local notes. Tests use synthetic numbers; the 17TRACK widget is stubbed so they do not query real shipments or establish live carrier behavior. System Chromium is used where available, or `CHROMIUM_PATH` if specified. On other machines, install Playwright’s browser with `npx playwright install chromium`.
+The 15 browser-only tests cover tracking interactions, supported banner/advertising display flags, mobile layouts, local project details, storage failures, backup export/restore, and backup validation. Eleven additional integration checks run against the real local Cloudflare Workers storage runtime and cover separate browser sessions, automatic refresh, conflicting edits, retained drafts, record isolation, validation, storage transactions, and migrating existing local notes. Tests use synthetic numbers; the 17TRACK widget is stubbed so they do not query real shipments or establish live carrier behavior. System Chromium is used where available, or `CHROMIUM_PATH` if specified. On other machines, install Playwright’s browser with `npx playwright install chromium`.
 
 ## Structure
 

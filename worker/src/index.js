@@ -56,6 +56,48 @@ export class ShipmentNotes {
   }
 }
 
+// A separate directory keeps saved numbers organized without changing shipment notes.
+export class SavedShipments {
+  constructor(ctx) { this.storage = ctx.storage; }
+  async fetch(request) {
+    if (request.method === 'GET') {
+      const folders = [...(await this.storage.list({ prefix: 'folder:' })).values()];
+      const entries = [...(await this.storage.list({ prefix: 'entry:' })).values()];
+      return json({ folders, entries });
+    }
+    if (request.method !== 'PUT') return json({ error: 'Method not allowed.' }, 405);
+    try {
+      const body = await readJSON(request);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('Invalid saved shipment.');
+      const result = await this.storage.transaction(async tx => {
+        if (body.action === 'folder') {
+          const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : '';
+          if (!name || name.length > 120) throw new Error('Enter a client name, up to 120 characters.');
+          const folders = [...(await tx.list({ prefix: 'folder:' })).values()];
+          const existing = folders.find(folder => folder.name.toLowerCase() === name.toLowerCase());
+          if (existing) return existing;
+          if (folders.length >= 2000) throw new Error('The workspace has reached its folder limit.');
+          const folder = { id: crypto.randomUUID(), name };
+          await tx.put(`folder:${folder.id}`, folder);
+          return folder;
+        }
+        if (!['entry', 'remove'].includes(body.action)) throw new Error('Choose a valid saved shipment action.');
+        if (typeof body.folderId !== 'string' || !/^[a-f0-9-]{36}$/.test(body.folderId) || !await tx.get(`folder:${body.folderId}`)) throw new Error('Choose an existing client folder.');
+        const number = typeof body.number === 'string' ? body.number.trim().toUpperCase() : '';
+        if (!trackingPattern.test(number)) throw new Error('Enter a tracking number with 5–50 letters, digits, or hyphens.');
+        const key = `entry:${body.folderId}:${number}`;
+        if (body.action === 'remove') { await tx.delete(key); return { ok: true }; }
+        const description = typeof body.description === 'string' ? body.description.trim() : '';
+        if (!description || description.length > 200) throw new Error('Enter an item description, up to 200 characters.');
+        const entry = { folderId: body.folderId, number, description };
+        await tx.put(key, entry);
+        return entry;
+      });
+      return json(result);
+    } catch (error) { return json({ error: error.message }, 400); }
+  }
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin');
@@ -72,6 +114,13 @@ export default {
     const match = /^\/api\/shipments\/([A-Za-z0-9-]+)$/.exec(url.pathname);
     let response;
     if (url.pathname === '/health' && request.method === 'GET') response = json({ ok: true, service: 'nina-elman-shipment-notes' });
+    else if (url.pathname === '/api/saved') {
+      if (request.method === 'OPTIONS') response = new Response(null, { status: 204 });
+      else {
+        try { response = await env.SAVED_SHIPMENTS.get(env.SAVED_SHIPMENTS.idFromName('studio')).fetch(request); }
+        catch { response = json({ error: 'Saved numbers are temporarily unavailable. Please try again.' }, 503); }
+      }
+    }
     else if (!match || !trackingPattern.test(match[1].toUpperCase())) response = json({ error: 'Shipment not found.' }, 404);
     else if (request.method === 'OPTIONS') response = new Response(null, { status: 204 });
     else if (!['GET', 'PUT'].includes(request.method)) response = json({ error: 'Method not allowed.' }, 405, { Allow: 'GET, PUT, OPTIONS' });

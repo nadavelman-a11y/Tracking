@@ -5,9 +5,9 @@
   "compatibility_date": "2026-10-15",
   "workers_dev": true,
   "durable_objects": {
-    "bindings": [{ "name": "SHIPMENT_NOTES", "class_name": "ShipmentNotes" }]
+    "bindings": [{ "name": "SHIPMENT_NOTES", "class_name": "ShipmentNotes" }, { "name": "SAVED_SHIPMENTS", "class_name": "SavedShipments" }]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ShipmentNotes"] }],
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ShipmentNotes"] }, { "tag": "v2", "new_sqlite_classes": ["SavedShipments"] }],
   "vars": {
     "ALLOWED_ORIGINS": "https://nadavelman-a11y.github.io,https://tracking.ninaelmaninteriors.com,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:4173"
   },
