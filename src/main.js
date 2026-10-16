@@ -5,6 +5,9 @@ import '@fontsource/manrope/latin-400.css';
 import '@fontsource/manrope/latin-500.css';
 import '@fontsource/manrope/latin-600.css';
 import './style.css';
+import { createBackup, readBackup, mergeBackup } from './workspace-backup.js';
+import { sharedNotesEnabled } from './shared-notes.js';
+import { connectSharedDetails } from './detail-sync.js';
 
 const paths = {
   arrow: '<path d="M4 12h15m-5-5 5 5-5 5"/>',
@@ -63,8 +66,12 @@ document.querySelector('#app').innerHTML = `
     </section>
 
     <section class="recent-section shell" id="recent-section" aria-labelledby="recent-title" hidden>
-      <div class="section-line"><h2 id="recent-title">Recent shipments <span>Saved on this browser</span></h2><button class="text-button" id="clear-recent">Clear recent searches</button></div>
-      <p class="workspace-storage-note">Project details and notes stay on this browser. They are not synced between employees.</p><div id="recent-list" class="recent-list"></div>
+      <div class="section-line"><h2 id="recent-title">Recent shipments <span>Searches on this browser</span></h2><button class="text-button" id="clear-recent">Clear recent searches</button></div>
+      <p class="workspace-storage-note">${sharedNotesEnabled ? 'Shared by tracking number. Anyone with the number can view and edit the project details.' : 'Project details and notes stay on this browser. Shared storage is not connected yet.'}</p><div id="recent-list" class="recent-list"></div>
+    </section>
+
+    <section class="workspace-tools shell" aria-label="Workspace backup">
+      <details><summary><span>${icon('box')} Keep your saved notes</span>${icon('chevron')}</summary><div class="backup-content"><p>Download a backup before moving to a new domain or browser. It includes your saved project details and notes. Restoring a backup keeps existing nonempty details.</p><div class="backup-actions"><button class="outline-button" id="export-workspace" type="button">Download backup ${icon('arrow')}</button><button class="outline-button" id="import-workspace" type="button">Restore backup</button><input id="backup-file" type="file" accept=".json,application/json" hidden></div><p id="backup-status" role="status"></p></div></details>
     </section>
 
     <section class="results-section shell" id="results" aria-labelledby="results-title" hidden>
@@ -76,7 +83,7 @@ document.querySelector('#app').innerHTML = `
       <div class="benefits-intro"><div class="eyebrow">BUILT FOR THE STUDIO TEAM</div><h2 id="benefits-title">A more organized <em>delivery day.</em></h2></div>
       <div class="benefit-grid">
         <article><span class="benefit-number">01</span><div class="benefit-icon">${icon('search')}</div><h3>Track the supplier’s shipment.</h3><p>Enter a tracking number from the supplier. Search up to 10 shipments at a time and switch between their updates.</p></article>
-        <article><span class="benefit-number">02</span><div class="benefit-icon">${icon('globe')}</div><h3>Keep the project attached.</h3><p>Add a project reference, supplier, item, order number, and notes to each shipment. Details are saved on this browser.</p></article>
+        <article><span class="benefit-number">02</span><div class="benefit-icon">${icon('globe')}</div><h3>Keep the project attached.</h3><p>Add a project reference, supplier, item, order number, and notes to each shipment. ${sharedNotesEnabled ? 'Everyone viewing the same tracking number sees saved updates automatically.' : 'Details are saved on this browser until shared storage is connected.'}</p></article>
         <article><span class="benefit-number">03</span><div class="benefit-icon">${icon('leaf')}</div><h3>Plan the next handoff.</h3><p>Check carrier progress before coordinating receiving, delivery appointments, and installation with the team.</p></article>
       </div>
     </section>
@@ -87,7 +94,7 @@ document.querySelector('#app').innerHTML = `
         <details><summary>Where can I find my tracking number? ${icon('chevron')}</summary><p>Use the tracking number in the supplier’s dispatch email or shipping confirmation. Supplier order numbers and purchase order references are separate; you can save those in the shipment’s project details.</p></details>
         <details><summary>Why isn’t my tracking showing updates? ${icon('chevron')}</summary><p>A new number can take 24–48 hours to appear after a carrier receives your shipment. Updates may also pause between scans or during customs processing. If the expected delivery date has passed, contact the retailer or carrier with your tracking number.</p></details>
         <details><summary>What if my order arrives in several deliveries? ${icon('chevron')}</summary><p>Furniture and accessories may ship in separate cartons or from different suppliers. Each shipment has its own tracking number. Choose “Track multiple” to enter up to 10 numbers, one per line, and switch between their results.</p></details>
-        <details><summary>Can the rest of the team see my notes? ${icon('chevron')}</summary><p>Project details and notes are saved only in the browser where you enter them. They are not shared between employees or devices. The website link is public; there is currently no employee sign-in or shared project database. For delivery changes and appointments, contact the supplier or carrier directly.</p></details>
+        <details><summary>Can the rest of the team see my notes? ${icon('chevron')}</summary><p>${sharedNotesEnabled ? 'Yes. Saved details are shared with anyone who enters the same tracking number, with no sign-in. Other open views refresh automatically about every 10 seconds. If someone changes a shipment while you are editing, your draft is kept and you can load the latest shared version before saving.' : 'Shared storage is not connected yet. Your saved details stay on this browser. Once connected, anyone entering the same tracking number will be able to view and edit shared notes without signing in.'} For delivery changes and appointments, contact the supplier or carrier directly.</p></details>
         <details><summary>How is my tracking information used? ${icon('chevron')}</summary><p>Submitting a number sends it to 17TRACK to look up carrier information. Recent numbers stay in this browser only and can be cleared above. We don’t have an account system or store your tracking history on our own server. 17TRACK’s own privacy policy applies to its tracking service.</p></details>
       </div>
     </section>
@@ -105,11 +112,15 @@ const content = document.querySelector('#results-content');
 const storageKey = 'nina-elman-tracking-history';
 const detailStorageKey = 'nina-elman-shipment-details';
 const detailDrafts = new Map();
+const draftVersions = new Map();
+const sharedDetails = new Map();
+let stopDetailSync = () => {};
 let multiple = false;
 let requestId = 0;
 let widgetPromise;
 
 function shipmentDetails(number) {
+  if (sharedNotesEnabled && sharedDetails.get(number)?.version > 0) return sharedDetails.get(number).details;
   try {
     const entries = JSON.parse(localStorage.getItem(detailStorageKey) || '{}');
     const data = entries && typeof entries === 'object' && Object.hasOwn(entries, number) ? entries[number] : {};
@@ -117,7 +128,7 @@ function shipmentDetails(number) {
   } catch { return {}; }
 }
 
-function mountDetails(number, panel) {
+function mountLocalDetails(number, panel) {
   const details = detailDrafts.get(number) || shipmentDetails(number);
   const form = panel.querySelector('#shipment-details-form');
   for (const [key, value] of Object.entries(details)) form.elements.namedItem(key).value = value;
@@ -146,6 +157,27 @@ function mountDetails(number, panel) {
     detailDrafts.set(number, Object.fromEntries(new FormData(form)));
     panel.querySelector('#details-status').textContent = 'Unsaved changes. Select “Save details” to keep them.';
     panel.querySelector('#details-status').dataset.state = 'unsaved';
+  });
+}
+
+function mountDetails(number, panel) {
+  if (!sharedNotesEnabled) { mountLocalDetails(number, panel); return; }
+  stopDetailSync = connectSharedDetails({
+    number,
+    form: panel.querySelector('#shipment-details-form'),
+    status: panel.querySelector('#details-status'),
+    loadLatest: panel.querySelector('#load-shared-version'),
+    localDetails: shipmentDetails(number),
+    drafts: detailDrafts,
+    versions: draftVersions,
+    cached: sharedDetails.get(number),
+    onRecord: record => { sharedDetails.set(number, record); renderHistory(); },
+    persist: details => {
+      const stored = JSON.parse(localStorage.getItem(detailStorageKey) || '{}');
+      const entries = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+      entries[number] = details;
+      localStorage.setItem(detailStorageKey, JSON.stringify(entries));
+    },
   });
 }
 
@@ -232,6 +264,7 @@ function loadWidget() {
 function trackingLink(number) { return `https://t.17track.net/en#nums=${encodeURIComponent(number)}`; }
 
 async function showLiveNumber(number) {
+  stopDetailSync();
   const currentRequest = ++requestId;
   const panel = document.querySelector('#live-panel');
   panel.innerHTML = `<div class="live-topline"><div><span class="eyebrow">SHIPMENT REFERENCE</span><h3 id="active-number"></h3></div><a id="carrier-link" class="outline-button" target="_blank" rel="noopener noreferrer">Open in 17TRACK ${icon('external')}</a></div>
@@ -243,7 +276,8 @@ async function showLiveNumber(number) {
         <label for="detail-order">PO / order number</label><input id="detail-order" name="order" maxlength="120" placeholder="Purchase order reference" autocomplete="off">
         <label for="detail-notes">Team notes</label><textarea id="detail-notes" name="notes" rows="3" maxlength="2000" placeholder="Receiving instructions, installation notes…"></textarea>
         <button class="save-details" type="submit">Save details ${icon('check')}</button>
-        <p id="details-status" class="details-status" role="status">Saved on this browser only. Not shared with other employees.</p>
+        <p id="details-status" class="details-status" role="status">${sharedNotesEnabled ? 'Loading shared notes…' : 'Saved on this browser only. Shared storage is not connected yet.'}</p>
+        <button class="text-button load-shared-version" id="load-shared-version" type="button" hidden>Load shared version</button>
       </form></aside>
       <div class="carrier-panel"><div class="widget-notice" role="status"><span class="loading-spinner" aria-hidden="true"></span><div><strong>Retrieving carrier updates</strong><p>Connecting to 17TRACK…</p></div></div><div id="tracking-widget"></div><div class="provider-footnote">${icon('globe')} Carrier data by 17TRACK. Delivery estimates may change.</div></div>
     </div>`;
@@ -330,6 +364,7 @@ document.querySelector('#clear-recent').addEventListener('click', () => {
   renderHistory();
 });
 document.querySelector('#close-results').addEventListener('click', () => {
+  stopDetailSync();
   ++requestId;
   results.hidden = true;
   content.replaceChildren();
@@ -337,6 +372,7 @@ document.querySelector('#close-results').addEventListener('click', () => {
 });
 
 document.querySelector('#show-demo').addEventListener('click', () => {
+  stopDetailSync();
   ++requestId;
   content.innerHTML = `<div class="demo-banner">This is a design preview with example information, not a live shipment.</div>
     <div class="demo-layout"><div class="demo-summary"><div class="demo-status">${icon('truck')} In transit</div><h3>Lounge chair<br>for the Oak House project.</h3><p>Example supplier · Example purchase order</p><div class="demo-estimate"><span class="eyebrow">EXAMPLE DELIVERY WINDOW</span><strong>Thursday, 12 June</strong><span>Delivery timing is illustrative.</span></div><div class="demo-meta"><span>Shipment reference</span><strong>NE–PREVIEW–001</strong><span>Delivery service</span><strong>Example carrier</strong></div></div>
@@ -344,6 +380,49 @@ document.querySelector('#show-demo').addEventListener('click', () => {
       <ol><li class="current"><span class="timeline-marker">${icon('truck')}</span><div><span class="timeline-time">11 JUN · 09:42</span><h5>In transit to your local depot</h5><p>Your piece is on the next leg of its journey.</p></div></li><li><span class="timeline-marker">${icon('check')}</span><div><span class="timeline-time">10 JUN · 16:15</span><h5>Collected by the carrier</h5><p>Carefully packed and ready for the road.</p></div></li><li><span class="timeline-marker">${icon('check')}</span><div><span class="timeline-time">09 JUN · 11:30</span><h5>Delivery details received</h5><p>The first step toward your space.</p></div></li></ol>
       <p class="demo-disclaimer">This timeline is an example design, not live data. Actual shipments use the carrier view, with the provider’s header and advertising turned off.</p></div></div>`;
   revealResults(true);
+});
+
+document.querySelector('#export-workspace').addEventListener('click', () => {
+  const status = document.querySelector('#backup-status');
+  try {
+    const shipments = JSON.parse(localStorage.getItem(detailStorageKey) || '{}');
+    const blob = new Blob([createBackup(shipments, getHistory())], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `nina-elman-workspace-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    status.textContent = 'Backup downloaded. Restore this file on your new domain or browser.';
+  } catch {
+    status.textContent = 'The backup could not be created. Your saved details have not been changed.';
+  }
+});
+
+document.querySelector('#import-workspace').addEventListener('click', () => document.querySelector('#backup-file').click());
+document.querySelector('#backup-file').addEventListener('change', async event => {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+  if (!file) return;
+  const status = document.querySelector('#backup-status');
+  try {
+    if (file.size > 1_000_000) throw new Error('Please choose a workspace backup smaller than 1 MB.');
+    const incoming = readBackup(await file.text());
+    const existing = JSON.parse(localStorage.getItem(detailStorageKey) || '{}');
+    const shipments = mergeBackup(existing, incoming.shipments);
+    localStorage.setItem(detailStorageKey, JSON.stringify(shipments));
+    // History is only a shortcut; saved shipment details remain intact if it cannot be updated.
+    let historySaved = true;
+    try { localStorage.setItem(storageKey, JSON.stringify([...new Set([...getHistory(), ...incoming.recent, ...Object.keys(incoming.shipments)])].slice(0, 8))); } catch { historySaved = false; }
+    renderHistory();
+    status.textContent = historySaved ? (sharedNotesEnabled ? 'Backup restored to this browser. Shared notes were not changed. Open a shipment and save to share local details when no shared record exists.' : 'Backup restored. Existing nonempty details and unsaved drafts were kept.') : 'Shipment details restored. Your browser could not update recent searches.';
+  } catch (error) {
+    status.textContent = error.message || 'The backup could not be restored. Your saved details have not been changed.';
+  } finally {
+    input.value = '';
+  }
 });
 
 renderHistory();

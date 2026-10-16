@@ -5,6 +5,7 @@ const executablePath = process.env.CHROMIUM_PATH || (existsSync('/usr/bin/chromi
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: ['tracking.spec.js', 'backup.spec.js'],
   fullyParallel: true,
   workers: 2,
   use: {

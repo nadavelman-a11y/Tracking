@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:download": "vite build && node scripts/build-download.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "playwright test"
+    "test": "playwright test && playwright test --config playwright.shared.config.js",
+    "notes:dev": "wrangler dev --config worker/wrangler.jsonc --local --ip 127.0.0.1 --port 8787",
+    "notes:deploy": "wrangler deploy --config worker/wrangler.jsonc",
+    "test:shared": "playwright test --config playwright.shared.config.js"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.2.8",
@@ -16,6 +19,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
-    "vite": "^7.1.12"
+    "vite": "^7.1.12",
+    "wrangler": "4.151.0"
   }
 }
