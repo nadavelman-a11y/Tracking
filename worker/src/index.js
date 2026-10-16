@@ -81,8 +81,15 @@ export class SavedShipments {
           await tx.put(`folder:${folder.id}`, folder);
           return folder;
         }
-        if (!['entry', 'remove'].includes(body.action)) throw new Error('Choose a valid saved shipment action.');
+        if (!['entry', 'remove', 'delete-folder'].includes(body.action)) throw new Error('Choose a valid saved shipment action.');
         if (typeof body.folderId !== 'string' || !/^[a-f0-9-]{36}$/.test(body.folderId) || !await tx.get(`folder:${body.folderId}`)) throw new Error('Choose an existing client folder.');
+        if (body.action === 'delete-folder') {
+          const entries = await tx.list({ prefix: `entry:${body.folderId}:` });
+          if (!Number.isSafeInteger(body.entryCount) || body.entryCount !== entries.size) throw new Error('This folder changed. Refresh Saved numbers and review it before deleting.');
+          const keys = [...entries.keys(), `folder:${body.folderId}`];
+          for (let offset = 0; offset < keys.length; offset += 128) await tx.delete(keys.slice(offset, offset + 128));
+          return { ok: true };
+        }
         const number = typeof body.number === 'string' ? body.number.trim().toUpperCase() : '';
         if (!trackingPattern.test(number)) throw new Error('Enter a tracking number with 5–50 letters, digits, or hyphens.');
         const key = `entry:${body.folderId}:${number}`;

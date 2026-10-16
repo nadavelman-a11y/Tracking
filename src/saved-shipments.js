@@ -11,7 +11,7 @@ export function mountSavedShipments({ openShipment }) {
     <label class="saved-search-label" for="saved-search">Find a client, number, or item</label><input id="saved-search" type="search" placeholder="Search saved shipments…" autocomplete="off">
     <p id="saved-status" role="status" aria-live="polite"></p>
     <div class="saved-layout"><aside class="saved-sidebar"><h3>Client folders <span id="folder-count"></span></h3><form id="folder-form"><label for="folder-name">New client folder</label><div class="saved-inline"><input id="folder-name" name="name" maxlength="120" required placeholder="Client name"><button class="outline-button" type="submit">Add folder</button></div></form><div id="folder-list" class="folder-list" aria-label="Client folders"></div></aside>
-    <section class="saved-content" aria-labelledby="folder-title"><div class="saved-folder-heading"><h3 id="folder-title">Choose a client folder</h3><span id="entry-count"></span></div><p id="folder-empty">Add your first folder to start organizing shipments.</p>
+    <section class="saved-content" aria-labelledby="folder-title"><div class="saved-folder-heading"><h3 id="folder-title">Choose a client folder</h3><span id="entry-count"></span><button type="button" class="text-button delete-folder" id="delete-folder" hidden>Delete folder</button></div><p id="folder-empty">Add your first folder to start organizing shipments.</p>
     <form id="saved-entry-form" hidden><h4>Add tracking number</h4><label for="saved-number">Tracking number</label><input id="saved-number" name="number" maxlength="50" required pattern="[A-Za-z0-9-]{5,50}" autocapitalize="characters" placeholder="Enter tracking number"><label for="saved-description">Item description</label><input id="saved-description" name="description" maxlength="200" required placeholder="e.g. Chair for dining room"><div class="saved-entry-actions"><button class="primary-button" type="submit">Save number</button><button class="text-button" type="button" id="cancel-saved-edit" hidden>Cancel edit</button></div><p class="input-hint">An existing number in this folder updates its description.</p></form>
     <div id="saved-entry-list" class="saved-entry-list"></div></section></div>`;
   document.body.append(dialog);
@@ -55,6 +55,7 @@ export function mountSavedShipments({ openShipment }) {
     $('#saved-scope').querySelector('[value=folder]').disabled = !folder;
     $('#folder-title').textContent = globalSearch ? 'Results across all folders' : folder?.name || 'Choose a client folder';
     entryForm.hidden = !folder || globalSearch;
+    $('#delete-folder').hidden = !folder || globalSearch;
     const entries = (globalSearch ? data.entries : folder ? folderEntries(folder.id) : []).filter(entry => !query || folders.find(item => item.id === entry.folderId)?.name.toLowerCase().includes(query) || matches(entry)).sort((a,b) => collator.compare(a.number,b.number) || collator.compare(a.folderId,b.folderId));
     $('#entry-count').textContent = folder || globalSearch ? `${entries.length} ${entries.length === 1 ? 'shipment' : 'shipments'}` : '';
     $('#folder-empty').hidden = Boolean(entries.length);
@@ -77,7 +78,7 @@ export function mountSavedShipments({ openShipment }) {
     }
   }
   function resetEntry() { entryForm.reset(); $('#saved-number').readOnly = false; $('#cancel-saved-edit').hidden = true; }
-  function setBusy(value) { busy = value; dialog.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = value || !ready; }); }
+  function setBusy(value) { busy = value; dialog.querySelectorAll('button[type="submit"], #delete-folder').forEach(button => { button.disabled = value || !ready; }); }
   async function refresh(quiet = false) {
     if (loading || busy || !sharedNotesEnabled) return;
     loading = true;
@@ -99,6 +100,20 @@ export function mountSavedShipments({ openShipment }) {
   }
   folderForm.onsubmit = event => { event.preventDefault(); mutate({ action: 'folder', name: $('#folder-name').value }, folder => { if (!data.folders.some(item => item.id === folder.id)) data.folders.push(folder); selected = folder.id; folderForm.reset(); resetEntry(); $('#saved-search').value = ''; }, 'Client folder saved. Add a tracking number below.'); };
   entryForm.onsubmit = event => { event.preventDefault(); const folderId = selected; mutate({ action: 'entry', folderId, number: $('#saved-number').value, description: $('#saved-description').value }, entry => { data.entries = data.entries.filter(item => !(item.folderId === folderId && item.number === entry.number)); data.entries.push(entry); resetEntry(); }, 'Tracking number saved for the team.'); };
+  $('#delete-folder').onclick = () => {
+    if (busy || loading || !ready) return;
+    const folder = data.folders.find(item => item.id === selected);
+    if (!folder) return;
+    const entryCount = data.entries.filter(entry => entry.folderId === folder.id).length;
+    if (!confirm(`Delete “${folder.name}” and its ${entryCount} saved ${entryCount === 1 ? 'number' : 'numbers'} for everyone? Shipment notes will be kept. This cannot be undone.`)) return;
+    mutate({ action: 'delete-folder', folderId: folder.id, entryCount }, () => {
+      data.folders = data.folders.filter(item => item.id !== folder.id);
+      data.entries = data.entries.filter(entry => entry.folderId !== folder.id);
+      selected = [...data.folders].sort((a,b) => collator.compare(a.name,b.name))[0]?.id || null;
+      if (!selected) $('#saved-scope').value = 'all';
+      resetEntry();
+    }, 'Folder and its saved numbers deleted. Shipment notes kept.');
+  };
   $('#saved-search').oninput = render;
   $('#saved-scope').onchange = render;
   $('#cancel-saved-edit').onclick = resetEntry;

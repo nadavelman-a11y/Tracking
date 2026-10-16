@@ -223,3 +223,34 @@ test('search switches between all folders and the selected folder', async ({ pag
   await expect(page.locator('#folder-title')).toHaveText('Beta Client');
   await expect(page.locator('#saved-number')).toHaveValue('TEST22222');
 });
+
+test('deleting a folder confirms, removes only its listings, and keeps notes and other folders', async ({ page, request }) => {
+  const endpoint = 'http://127.0.0.1:8787/api/saved';
+  const name = `Delete test ${randomUUID()}`;
+  const folder = await (await request.put(endpoint, { data: { action: 'folder', name } })).json();
+  const other = await (await request.put(endpoint, { data: { action: 'folder', name: `${name} keep` } })).json();
+  const tracking = number();
+  for (const folderId of [folder.id, other.id]) await request.put(endpoint, { data: { action: 'entry', folderId, number: tracking, description: 'Keep notes separately' } });
+  await request.put(api + tracking, { data: { details: { notes: 'Keep these shipment notes' }, baseVersion: 0 } });
+  const stale = await request.put(endpoint, { data: { action: 'delete-folder', folderId: folder.id, entryCount: 0 } });
+  expect(stale.status()).toBe(400);
+  await page.goto(url);
+  await page.getByRole('button', { name: 'Saved numbers', exact: true }).click();
+  await expect(page.locator('#saved-status')).toContainText('Shared with everyone');
+  await page.locator('#saved-search').fill(name);
+  await page.locator('.folder-button').filter({ hasText: name }).first().click();
+  page.once('dialog', async dialog => { expect(dialog.message()).toContain('1 saved number'); await dialog.dismiss(); });
+  await page.getByRole('button', { name: 'Delete folder', exact: true }).click();
+  await expect(page.locator('#folder-title')).toHaveText(name);
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Delete folder', exact: true }).click();
+  await expect(page.locator('#saved-status')).toHaveText('Folder and its saved numbers deleted. Shipment notes kept.');
+  let data = await (await request.get(endpoint)).json();
+  expect(data.folders.some(item => item.id === folder.id)).toBeFalsy();
+  expect(data.entries.some(item => item.folderId === folder.id)).toBeFalsy();
+  expect(data.entries.some(item => item.folderId === other.id && item.number === tracking)).toBeTruthy();
+  expect((await (await request.get(api + tracking)).json()).details.notes).toBe('Keep these shipment notes');
+  // Empty folders can be deleted too.
+  const empty = await (await request.put(endpoint, { data: { action: 'folder', name: `${name} empty` } })).json();
+  expect((await request.put(endpoint, { data: { action: 'delete-folder', folderId: empty.id, entryCount: 0 } })).ok()).toBeTruthy();
+});
