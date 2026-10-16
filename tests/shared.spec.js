@@ -113,7 +113,7 @@ test('client folders sort alphabetically, share across browsers, and open saved 
   try {
     const a = await first.newPage(), b = await second.newPage();
     await a.goto(url);
-    await a.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+    await a.getByRole('button', { name: 'Saved numbers', exact: true }).click();
     await expect(a.locator('#saved-status')).toContainText('Shared with everyone');
     for (const name of [`Zelda ${unique}`, `Alice ${unique}`]) {
       await a.getByLabel('New client folder', { exact: true }).fill(name);
@@ -126,7 +126,7 @@ test('client folders sort alphabetically, share across browsers, and open saved 
     await expect(a.locator('.saved-entry-open')).toContainText(`${tracking} — Chair for dining room`);
     await b.route('https://www.17track.net/externalcall.js', route => route.abort());
     await b.goto(url);
-    await b.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+    await b.getByRole('button', { name: 'Saved numbers', exact: true }).click();
     await expect(b.locator('#saved-status')).toContainText('Shared with everyone');
     await b.locator('#saved-search').fill(unique);
     const names = await b.locator('.folder-button span:first-child').allTextContents();
@@ -138,6 +138,7 @@ test('client folders sort alphabetically, share across browsers, and open saved 
     await b.getByRole('button', { name: 'Save number', exact: true }).click();
     await expect(b.locator('.saved-entry-open')).toContainText('Dining chair — updated');
     await expect(b.locator('.saved-entry')).toHaveCount(1);
+    await b.getByLabel('Search in', { exact: true }).selectOption('all');
     await b.locator('#saved-search').fill(tracking);
     await expect(b.locator('.folder-button')).toHaveCount(1);
     await b.locator('.saved-entry-open').click();
@@ -168,7 +169,7 @@ test('saved directory validates input, deduplicates folders, and removes only th
 
 test('saved forms retain drafts when the directory cannot save', async ({ page }) => {
   await page.goto(url);
-  await page.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+  await page.getByRole('button', { name: 'Saved numbers', exact: true }).click();
   await expect(page.locator('#saved-status')).toContainText('Shared with everyone');
   await page.route('**/api/saved', route => route.request().method() === 'PUT' ? route.abort() : route.continue());
   await page.getByLabel('New client folder', { exact: true }).fill('Keep this client draft');
@@ -187,7 +188,7 @@ test('hundreds of saved shipments stay searchable on a narrow phone', async ({ p
   }
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(url);
-  await page.getByRole('button', { name: 'Saved no.s', exact: true }).click();
+  await page.getByRole('button', { name: 'Saved numbers', exact: true }).click();
   await expect(page.locator('#saved-status')).toContainText('Shared with everyone');
   await page.locator('#saved-search').fill(name);
   await page.locator('.folder-button').filter({ hasText: name }).click();
@@ -196,4 +197,29 @@ test('hundreds of saved shipments stay searchable on a narrow phone', async ({ p
   await expect(page.locator('.saved-entry')).toHaveCount(1);
   await expect(page.locator('.saved-entry-open')).toContainText('TESTBULK00219');
   expect(await page.locator('.saved-dialog').evaluate(element => element.scrollWidth <= element.clientWidth)).toBeTruthy();
+});
+
+test('search switches between all folders and the selected folder', async ({ page }) => {
+  await page.route('**/api/saved', route => route.fulfill({ json: {
+    folders: [{ id: 'a', name: 'Alpha Client' }, { id: 'b', name: 'Beta Client' }],
+    entries: [{ folderId: 'a', number: 'TEST11111', description: 'Dining chair' }, { folderId: 'b', number: 'TEST22222', description: 'Dining table' }],
+  } }));
+  await page.goto(url);
+  await page.getByRole('button', { name: 'Saved numbers', exact: true }).click();
+  await expect(page.locator('#folder-title')).toHaveText('Alpha Client');
+  await page.locator('#saved-search').fill('Dining');
+  await expect(page.locator('.saved-entry')).toHaveCount(2);
+  await expect(page.locator('.saved-entry-client')).toHaveText(['Alpha Client', 'Beta Client']);
+  await page.getByLabel('Search in', { exact: true }).selectOption('folder');
+  await expect(page.locator('.saved-entry')).toHaveCount(1);
+  await expect(page.locator('.saved-entry-open')).toContainText('TEST11111');
+  await page.locator('#saved-search').fill('TEST22222');
+  await expect(page.locator('.saved-entry')).toHaveCount(0);
+  await expect(page.locator('#folder-empty')).toHaveText('No matching shipments in this folder.');
+  await page.getByLabel('Search in', { exact: true }).selectOption('all');
+  await expect(page.locator('.saved-entry')).toHaveCount(1);
+  await expect(page.locator('.saved-entry-client')).toHaveText('Beta Client');
+  await page.getByRole('button', { name: 'Edit TEST22222', exact: true }).click();
+  await expect(page.locator('#folder-title')).toHaveText('Beta Client');
+  await expect(page.locator('#saved-number')).toHaveValue('TEST22222');
 });

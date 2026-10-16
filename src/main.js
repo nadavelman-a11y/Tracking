@@ -33,7 +33,7 @@ document.querySelector('#app').innerHTML = `
     <a class="brand" href="#" aria-label="Nina Elman Interiors home">${brand}</a>
     <nav aria-label="Main navigation">
       <a class="nav-active" href="#track">Shipment desk</a>
-      <button class="text-button" id="open-saved" type="button">Saved no.s</button>
+      <button class="text-button" id="open-saved" type="button">Saved numbers</button>
       <a href="#how-it-works">Quick guide</a>
       <a class="nav-help" href="#questions">Need a hand? ${icon('arrow')}</a>
     </nav>
