@@ -38,12 +38,12 @@ const button = (text, action, cls = "text-button") => {
 const localDate = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 export function mountSavedShipments({ openShipment }) {
-  const workspace = document.createElement("section");
+  const workspace = document.createElement("dialog");
   workspace.className = "saved-dialog saved-workspace shell";
   workspace.id = "saved-workspace";
   workspace.setAttribute("aria-labelledby", "saved-title");
   workspace.innerHTML = `
-    <div class="saved-heading"><div><div class="eyebrow">THE STUDIO DELIVERY DESK</div><h2 id="saved-title" tabindex="-1">Saved numbers</h2></div><button type="button" class="text-button" id="close-saved">Track a number ↗</button></div>
+    <div class="saved-heading"><div><div class="eyebrow">THE STUDIO DELIVERY DESK</div><h2 id="saved-title" tabindex="-1">Saved numbers</h2></div><button type="button" class="text-button" id="close-saved">Close ×</button></div>
     <p class="saved-intro">Your clients and deliveries, together. Statuses and expected dates below are entered by the team; open a shipment for live carrier updates.</p>
     <div class="workspace-actions"><button class="outline-button" id="open-import" type="button">Import spreadsheet</button><button class="text-button" id="export-shared" type="button">Download shared backup</button><button class="text-button" id="restore-backup" type="button">Restore shared backup</button><button class="text-button" id="open-trash" type="button">Recently deleted <span id="trash-count"></span></button><input type="file" id="shared-backup-file" accept="application/json,.json" hidden></div>
     <div class="workspace-filters"><div><label for="saved-search">Find a client, number, item, or supplier</label><input id="saved-search" type="search" placeholder="Search saved shipments…" autocomplete="off"></div><div><label for="saved-scope">Search in</label><select id="saved-scope"><option value="all">All folders</option><option value="folder">This folder</option></select></div><div><label for="saved-filter">Show shipments</label><select id="saved-filter"><option value="all">All shipments</option><option value="soon">Arriving in 7 days</option><option value="overdue">Past expected date</option><option value="Delayed">Delayed</option><option value="Received">Received</option><option value="open">Not received</option></select></div></div>
@@ -52,7 +52,7 @@ export function mountSavedShipments({ openShipment }) {
     <section class="saved-content" aria-labelledby="folder-title"><div class="saved-folder-heading"><h3 id="folder-title">Choose a client folder</h3><span id="entry-count"></span><button class="text-button" id="rename-folder" type="button" hidden>Rename folder</button><button type="button" class="text-button delete-folder" id="delete-folder" hidden>Delete folder</button></div><p id="folder-empty">Add your first folder or import your client spreadsheet.</p>
     <details id="entry-editor"><summary>Add tracking number</summary><form id="saved-entry-form" hidden><label for="saved-number">Tracking number</label><input id="saved-number" name="number" maxlength="50" required pattern="[A-Za-z0-9-]{5,50}" autocapitalize="characters" placeholder="Enter tracking number"><label for="saved-description">Item description</label><input id="saved-description" name="description" maxlength="200" required placeholder="e.g. Chair for dining room"><label for="saved-supplier">Shipment supplier</label><input id="saved-supplier" name="supplier" maxlength="120"><label for="saved-team-status">Team status (manual)</label><select id="saved-team-status" name="status"></select><label for="saved-expected">Expected date (team estimate)</label><input id="saved-expected" name="expected" type="date"><div class="saved-entry-actions"><button class="primary-button" type="submit">Save number</button><button class="text-button" type="button" id="cancel-saved-edit" hidden>Cancel edit</button></div><p class="input-hint">Choose Edit on a saved number to change its details.</p></form></details>
     <div id="saved-pagination" class="saved-pagination" aria-label="Shipment result pages"></div><div id="saved-entry-list" class="saved-entry-list"></div></section></div>`;
-  document.querySelector("main").prepend(workspace);
+  document.body.append(workspace);
   const $ = (selector) => workspace.querySelector(selector);
   for (const value of shipmentStatuses)
     $("#saved-team-status").add(new Option(value || "Not set", value));
@@ -223,7 +223,8 @@ export function mountSavedShipments({ openShipment }) {
       const open = button(
         "",
         () => {
-          returnY = window.scrollY;
+          returnY = workspace.scrollTop;
+          workspace.close();
           workspace.hidden = true;
           openShipment(entry.number, context(entry));
         },
@@ -977,14 +978,11 @@ export function mountSavedShipments({ openShipment }) {
     render();
   };
   $("#cancel-saved-edit").onclick = resetEntry;
-  $("#close-saved").onclick = () => {
-    workspace.hidden = true;
-    document.querySelector("#track").scrollIntoView({ behavior: "smooth" });
-    document.querySelector("#tracking-number").focus({ preventScroll: true });
-  };
+  $("#close-saved").onclick = () => workspace.close();
+  workspace.addEventListener("close", () => { workspace.hidden = true; });
   function open(number = "", back = false) {
     workspace.hidden = false;
-    document.body.classList.toggle("has-shared-workspace", sharedNotesEnabled);
+    if (!workspace.open) workspace.showModal();
     if (number) {
       $("#saved-search").value = "";
       $("#saved-filter").value = "all";
@@ -993,9 +991,8 @@ export function mountSavedShipments({ openShipment }) {
       $("#entry-editor").open = true;
       $("#saved-number").value = number;
     }
-    if (back) window.scrollTo({ top: returnY });
-    else workspace.scrollIntoView({ behavior: "smooth" });
     $("#saved-title").focus({ preventScroll: true });
+    if (back) workspace.scrollTop = returnY;
     if (!sharedNotesEnabled) {
       message(
         "Shared folders are not connected in this offline preview.",
@@ -1019,8 +1016,7 @@ export function mountSavedShipments({ openShipment }) {
   window.addEventListener("focus", () => {
     if (!workspace.hidden) refresh(true);
   });
-  workspace.hidden = !sharedNotesEnabled;
-  document.body.classList.toggle("has-shared-workspace", sharedNotesEnabled);
+  workspace.hidden = true;
   setBusy(false);
   if (sharedNotesEnabled) refresh();
   return {

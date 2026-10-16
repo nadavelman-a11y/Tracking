@@ -20,6 +20,9 @@ async function start(page) {
     route.abort(),
   );
   await page.goto(url);
+  await expect(page.locator(".hero-art")).toBeVisible();
+  await expect(page.locator("#saved-workspace")).not.toBeVisible();
+  await page.getByRole("button", { name: "Saved numbers", exact: true }).click();
   await expect(page.locator("#saved-status")).toContainText(
     "Shared with everyone",
   );
